@@ -1,12 +1,24 @@
 package br.com.unimart.view.dialogs;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Frame;
+
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.LineBorder;
+
 import br.com.unimart.controller.FeiraController;
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.model.Usuario;
 import br.com.unimart.util.Theme;
-
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
 
 /**
  * Modal de registro de interesse em um anúncio. Herda de BaseDialog.
@@ -24,12 +36,20 @@ public class InteresseDialog extends BaseDialog {
     }
 
     private void construirFormulario() {
+        Usuario logado = controller.getUsuarioLogado();
+
         JLabel sub = new JLabel("Item: " + anuncio.getTitulo());
         sub.setFont(new Font("SansSerif", Font.PLAIN, 13));
         sub.setForeground(Theme.TEXT_MUTED);
         sub.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JTextField nomeField = Theme.createInputField();
+        if (logado != null) {
+            nomeField.setText(logado.getNome());
+            nomeField.setEditable(false);
+            nomeField.setBackground(new Color(0xF4, 0xF6, 0xF5));
+        }
+
         JTextArea msgArea = new JTextArea(4, 20);
         msgArea.setLineWrap(true);
         msgArea.setWrapStyleWord(true);

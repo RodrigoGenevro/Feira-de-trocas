@@ -46,6 +46,16 @@ public final class DatabaseConfig {
 
     public static void initDatabase() throws SQLException {
         try (Connection c = getConnection(); Statement s = c.createStatement()) {
+            s.executeUpdate("CREATE TABLE IF NOT EXISTS usuarios (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "nome TEXT NOT NULL, " +
+                    "email TEXT NOT NULL UNIQUE, " +
+                    "turma TEXT, " +
+                    "senha_hash TEXT NOT NULL, " +
+                    "salt TEXT NOT NULL, " +
+                    "status TEXT NOT NULL DEFAULT 'ATIVO', " +
+                    "criado_em TEXT DEFAULT CURRENT_TIMESTAMP)");
+
             s.executeUpdate("CREATE TABLE IF NOT EXISTS anuncios (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "titulo TEXT NOT NULL, " +

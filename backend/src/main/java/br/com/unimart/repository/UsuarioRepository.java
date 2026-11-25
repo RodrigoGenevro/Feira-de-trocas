@@ -1,0 +1,109 @@
+package br.com.unimart.repository;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import br.com.unimart.model.Usuario;
+import br.com.unimart.util.DatabaseConfig;
+
+public class UsuarioRepository {
+
+    public Usuario salvar(Usuario usuario) throws SQLException {
+        String sql = "INSERT INTO usuarios (nome, email, turma, senha_hash, salt, status) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setString(1, usuario.getNome());
+            stmt.setString(2, usuario.getEmail());
+            stmt.setString(3, usuario.getTurma());
+            stmt.setString(4, usuario.getSenhaHash());
+            stmt.setString(5, usuario.getSalt());
+            stmt.setString(6, usuario.getStatus());
+
+            stmt.executeUpdate();
+
+            try (ResultSet keys = stmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    usuario.setId(keys.getInt(1));
+                }
+            }
+            return usuario;
+        }
+    }
+
+    public Usuario atualizar(Usuario usuario) throws SQLException {
+        String sql = "UPDATE usuarios SET nome = ?, email = ?, turma = ?, senha_hash = ?, salt = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, usuario.getNome());
+            stmt.setString(2, usuario.getEmail());
+            stmt.setString(3, usuario.getTurma());
+            stmt.setString(4, usuario.getSenhaHash());
+            stmt.setString(5, usuario.getSalt());
+            stmt.setInt(6, usuario.getId());
+
+            stmt.executeUpdate();
+            return usuario;
+        }
+    }
+
+    public Usuario buscarPorEmail(String email) throws SQLException {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+
+        String sql = "SELECT id, nome, email, turma, senha_hash, salt, status, criado_em " +
+                     "FROM usuarios WHERE lower(email) = lower(?) AND status = 'ATIVO' LIMIT 1";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, email.trim());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Usuario(
+                            rs.getInt("id"),
+                            rs.getString("nome"),
+                            rs.getString("email"),
+                            rs.getString("turma"),
+                            rs.getString("senha_hash"),
+                            rs.getString("salt"),
+                            rs.getString("status"),
+                            rs.getString("criado_em")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean existePorEmailEmOutroUsuario(String email, Integer idAtual) throws SQLException {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+
+        String sql = "SELECT id FROM usuarios WHERE lower(email) = lower(?) AND id <> ? LIMIT 1";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, email.trim());
+            stmt.setInt(2, idAtual != null ? idAtual : -1);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public boolean existePorEmail(String email) throws SQLException {
+        return buscarPorEmail(email) != null;
+    }
+}
