@@ -1,45 +1,89 @@
-# UniMart — versão simples
+# [Nome do projeto]
 
-Projeto de feira de trocas e doações para a comunidade do Senac.
+[English](README.md) · **Português (Brasil)**
 
-## Tecnologias
-- HTML, CSS e JavaScript puro no front-end.
-- Java 21 com `HttpServer` nativo no back-end (sem Spring Boot).
-- SQLite para persistência.
-- Maven apenas para baixar as bibliotecas SQLite JDBC e Gson.
+Preencham este README e mantenham-no atualizado. Ele faz parte da entrega e deve permanecer na **raiz** do repositório, junto com `DECISIONS.md` e `AI_LOG.md` (e as versões em português: `README.pt-BR.md`, `DECISIONS.pt-BR.md` e `AI_LOG.pt-BR.md`).
 
-## Como executar
-1. Instale Java 21 e Maven.
-2. Abra a pasta do projeto no VS Code.
-3. No terminal, entre na pasta `backend`:
-   ```bash
-   cd backend
-   mvn clean compile exec:java
-   ```
-4. Acesse http://localhost:8080.
+A documentação do projeto deve ser escrita **em inglês** (a versão principal é o [`README.md`](README.md)), com uma **versão em português** ao lado. Mantenham as duas versões alinhadas.
 
-O banco é criado automaticamente em `database/feira_trocas.db`.
+Criem, dentro do repositório, as **pastas de cada parte do projeto** que forem desenvolver (por exemplo, `/backend`, `/frontend`, `/docs`). A organização é escolha do time — descrevam-na na seção [Estrutura de pastas](#estrutura-de-pastas).
 
-## O que já funciona
-- Publicar anúncio com título, descrição, categoria, modalidade, nome e turma.
-- Listar anúncios salvos no SQLite.
-- Buscar por palavra no título ou descrição.
-- Filtrar por categoria e modalidade.
-- Enviar mensagem de interesse registrada no banco.
+No primeiro dia, adicionem o professor como colaborador do repositório, com o e-mail **adrianoanschau@gmail.com**.
 
-## Próximos passos do MVP
-- Tela para o anunciante consultar interesses recebidos.
-- Ações para reservar e concluir anúncio.
-- Upload de foto para o servidor (atualmente o formulário aceita um link de imagem).
-- Validação mais completa e regras de autorização.
+## Equipe
 
-## Estrutura
+- **Turma:** TDS — turmas mistas 6570, 6756 e 6863
+- **Tech Lead:** Rodrigo Genevro
+- **Responsável pela apresentação:** Warley Dos Reis Neto
+- **Integrantes:**
+  - Rodrigo — GitHub
+  - Vinicius Brilhante — GitHub
+  - Warley — GitHub
+  - Gabryel — GitHub
+
+## Tema / área
+
+Feira de trocas — vida no campus e comunidade
+
+## Problema
+
+( dificuldade em encontrar plataforma de trocas sem custo adicional, para universitarios com pouca verba )
+
+## Solução
+
+(o que a aplicação faz e qual é o recorte do MVP)
+
+## Stack
+
+(linguagens, frameworks e bibliotecas; o back-end pode ser Java, Python ou Node.js, isolados ou combinados, desde que integrados; o front-end é obrigatório — web, desktop ou mobile)
+
+Java swing
+
+## Estrutura de pastas
+
+Descrevam a organização do repositório. Ajustem o exemplo abaixo à escolha do time.
+
 ```text
-docs/
-frontend/index.html
-frontend/style.css
-frontend/app.js
-backend/src/main/java/br/com/unimart/Main.java
-backend/pom.xml
-database/feira_trocas.db (criado ao executar)
+/
+├── README.md
+├── README.pt-BR.md
+├── DECISIONS.md
+├── DECISIONS.pt-BR.md
+├── AI_LOG.md
+├── AI_LOG.pt-BR.md
+├── backend/
+├── frontend/
+└── docs/
 ```
+
+## Como rodar
+
+### Pré-requisitos
+
+(versões de linguagem, gerenciadores de pacote, banco de dados etc.)
+
+### Back-end
+
+```bash
+# comandos para instalar dependências e subir o back-end
+```
+
+### Front-end
+
+```bash
+# comandos para instalar dependências e subir o front-end
+```
+
+## CI/CD
+
+(descrevam a pipeline de GitHub Actions: o que roda em cada PR e em cada push na `main` — no mínimo build, lint e testes)
+
+## Deploy
+
+(onde a aplicação está publicada, se houver; ou indique que o deploy automático ainda não foi configurado)
+
+## Links
+
+- **Repositório:**
+- **Deploy (se houver):**
+- **Board / projeto no GitHub (se houver):**
