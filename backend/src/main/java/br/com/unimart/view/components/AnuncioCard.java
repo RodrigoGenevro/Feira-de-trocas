@@ -1,15 +1,28 @@
 package br.com.unimart.view.components;
 
-import br.com.unimart.model.Anuncio;
-import br.com.unimart.util.Theme;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Image;
 import java.net.URI;
 import java.net.URL;
 import java.util.function.Consumer;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.SwingWorker;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+
+import br.com.unimart.model.Anuncio;
+import br.com.unimart.util.Theme;
 
 /**
  * Componente visual encapsulado que representa um card de Anuncio na grade.
@@ -50,7 +63,11 @@ public class AnuncioCard extends JPanel {
         body.setBackground(Color.WHITE);
         body.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        JLabel pill = new JLabel("  " + anuncio.getModalidadeFormatada() + " · " + anuncio.getCategoria() + "  ");
+        JLabel pill = new JLabel(
+                "  " + anuncio.getModalidadeFormatada()
+                        + " · " + anuncio.getCategoria() + "  "
+        );
+
         pill.setOpaque(true);
         pill.setBackground(Theme.PALE);
         pill.setForeground(Theme.GREEN);
@@ -82,9 +99,16 @@ public class AnuncioCard extends JPanel {
         autorLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
         autorLabel.setForeground(Theme.TEXT_MUTED);
 
-        JButton btnInteresse = Theme.createButton("Tenho interesse", Theme.DARK, Color.WHITE);
+        // Botão com a mesma cor do botão principal
+        JButton btnInteresse = Theme.createButton(
+                "Tenho interesse",
+                Theme.GREEN,
+                Color.WHITE
+        );
+
         btnInteresse.setFont(new Font("SansSerif", Font.BOLD, 12));
         btnInteresse.setBorder(new EmptyBorder(8, 12, 8, 12));
+
         btnInteresse.addActionListener(e -> {
             if (onInteresseClick != null) {
                 onInteresseClick.accept(anuncio);
@@ -108,17 +132,26 @@ public class AnuncioCard extends JPanel {
 
     private void carregarImagemAssincrona(String urlStr, JLabel targetLabel) {
         new SwingWorker<ImageIcon, Void>() {
+
             @Override
             protected ImageIcon doInBackground() {
                 try {
                     URL url = URI.create(urlStr).toURL();
                     ImageIcon raw = new ImageIcon(url);
+
                     if (raw.getIconWidth() > 0) {
-                        Image scaled = raw.getImage().getScaledInstance(340, 150, Image.SCALE_SMOOTH);
+                        Image scaled = raw.getImage().getScaledInstance(
+                                340,
+                                150,
+                                Image.SCALE_SMOOTH
+                        );
+
                         return new ImageIcon(scaled);
                     }
+
                 } catch (Exception ignored) {
                 }
+
                 return null;
             }
 
@@ -126,10 +159,12 @@ public class AnuncioCard extends JPanel {
             protected void done() {
                 try {
                     ImageIcon icon = get();
+
                     if (icon != null) {
                         targetLabel.setText("");
                         targetLabel.setIcon(icon);
                     }
+
                 } catch (Exception ignored) {
                 }
             }
