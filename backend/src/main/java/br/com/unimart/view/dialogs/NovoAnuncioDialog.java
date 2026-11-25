@@ -1,11 +1,25 @@
 package br.com.unimart.view.dialogs;
 
-import br.com.unimart.controller.FeiraController;
-import br.com.unimart.util.Theme;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridLayout;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
-import java.awt.*;
+
+import br.com.unimart.controller.FeiraController;
+import br.com.unimart.model.Usuario;
+import br.com.unimart.util.Theme;
 
 /**
  * Modal de cadastro de novo anúncio. Herda de BaseDialog.
@@ -23,8 +37,23 @@ public class NovoAnuncioDialog extends BaseDialog {
     }
 
     private void construirFormulario() {
+        Usuario logado = controller.getUsuarioLogado();
+
         JTextField nomeField = Theme.createInputField();
         JTextField turmaField = Theme.createInputField();
+
+        if (logado != null) {
+            nomeField.setText(logado.getNome());
+            nomeField.setEditable(false);
+            nomeField.setBackground(new Color(0xF4, 0xF6, 0xF5));
+
+            if (logado.getTurma() != null && !logado.getTurma().isBlank()) {
+                turmaField.setText(logado.getTurma());
+                turmaField.setEditable(false);
+                turmaField.setBackground(new Color(0xF4, 0xF6, 0xF5));
+            }
+        }
+
         JTextField tituloField = Theme.createInputField();
 
         JTextArea descArea = new JTextArea(3, 20);

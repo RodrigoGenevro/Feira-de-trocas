@@ -1,15 +1,19 @@
 package br.com.unimart;
 
+import java.sql.SQLException;
+
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
 import br.com.unimart.controller.FeiraController;
 import br.com.unimart.util.DatabaseConfig;
 import br.com.unimart.view.MainFrame;
-
-import javax.swing.*;
-import java.sql.SQLException;
+import br.com.unimart.view.dialogs.LoginCadastroDialog;
 
 /**
  * Ponto de entrada da aplicação desktop UniMart.
- * Inicializa o banco de dados, instancia o Controlador e exibe a View principal.
+ * Inicializa o banco de dados, exige autenticação e exibe a View principal.
  */
 public class Main {
 
@@ -31,7 +35,17 @@ public class Main {
         SwingUtilities.invokeLater(() -> {
             FeiraController controller = new FeiraController();
             MainFrame mainFrame = new MainFrame(controller);
-            mainFrame.setVisible(true);
+
+            LoginCadastroDialog acessoDialog = new LoginCadastroDialog(
+                    mainFrame,
+                    controller,
+                    () -> {
+                        mainFrame.atualizarHeaderAuth();
+                        mainFrame.setVisible(true);
+                    },
+                    () -> System.exit(0)
+            );
+            acessoDialog.setVisible(true);
         });
     }
 }

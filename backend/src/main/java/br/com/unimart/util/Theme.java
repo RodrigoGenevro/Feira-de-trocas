@@ -1,9 +1,19 @@
+
 package br.com.unimart.util;
 
-import javax.swing.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import java.awt.*;
 
 public final class Theme {
 
@@ -20,15 +30,24 @@ public final class Theme {
     }
 
     public static JButton createButton(String text, Color bg, Color fg) {
-        JButton btn = new JButton(text);
-        btn.setBackground(bg);
-        btn.setForeground(fg);
-        btn.setFocusPainted(false);
-        btn.setFont(new Font("SansSerif", Font.BOLD, 13));
-        btn.setBorder(new EmptyBorder(11, 18, 11, 18));
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
+    JButton btn = new JButton(text);
+
+    btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+
+    btn.setBackground(bg);
+    btn.setForeground(fg);
+
+    btn.setOpaque(true);
+    btn.setContentAreaFilled(true);
+    btn.setBorderPainted(false);
+    btn.setFocusPainted(false);
+
+    btn.setFont(new Font("SansSerif", Font.BOLD, 13));
+    btn.setBorder(new EmptyBorder(11, 18, 11, 18));
+    btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+    return btn;
+}
 
     public static JLabel createFieldLabel(String text) {
         JLabel lbl = new JLabel(text);
@@ -44,10 +63,12 @@ public final class Theme {
         field.setFont(new Font("SansSerif", Font.PLAIN, 14));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         field.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         field.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(BORDER_COLOR, 1, true),
                 new EmptyBorder(6, 10, 6, 10)
         ));
+
         return field;
     }
 

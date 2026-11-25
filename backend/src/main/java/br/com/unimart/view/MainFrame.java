@@ -1,20 +1,42 @@
 package br.com.unimart.view;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+
 import br.com.unimart.controller.FeiraController;
 import br.com.unimart.model.Anuncio;
 import br.com.unimart.util.Theme;
 import br.com.unimart.view.components.AnuncioCard;
 import br.com.unimart.view.dialogs.InteresseDialog;
+import br.com.unimart.view.dialogs.LoginCadastroDialog;
 import br.com.unimart.view.dialogs.NovoAnuncioDialog;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.sql.SQLException;
-import java.util.List;
+import br.com.unimart.view.dialogs.PerfilDialog;
 
 /**
  * Janela principal da aplicação (Camada View).
@@ -28,11 +50,13 @@ public class MainFrame extends JFrame {
     private JComboBox<String> modalidadeCombo;
     private JLabel contadorLabel;
     private JPanel gridPanel;
+    private JPanel authActionsPanel;
 
     public MainFrame(FeiraController controller) {
         this.controller = controller;
         configurarJanela();
         construirLayout();
+        atualizarHeaderAuth();
         atualizarGrid();
     }
 
@@ -91,12 +115,66 @@ public class MainFrame extends JFrame {
         leftPanel.add(brand);
         leftPanel.add(subtitle);
 
-        JButton novoBtn = Theme.createButton("+ Publicar anúncio", Theme.GREEN, Color.WHITE);
-        novoBtn.addActionListener(e -> new NovoAnuncioDialog(this, controller, this::atualizarGrid).setVisible(true));
+        authActionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        authActionsPanel.setBackground(Color.WHITE);
 
         header.add(leftPanel, BorderLayout.WEST);
-        header.add(novoBtn, BorderLayout.EAST);
+        header.add(authActionsPanel, BorderLayout.EAST);
         return header;
+    }
+
+    public void atualizarHeaderAuth() {
+        authActionsPanel.removeAll();
+
+        if (controller.isLogado()) {
+            JButton perfilBtn = Theme.createButton("Meu perfil", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+            perfilBtn.addActionListener(e -> new PerfilDialog(this, controller, this::atualizarHeaderAuth).setVisible(true));
+
+            JButton sairBtn = Theme.createButton("Sair", new Color(0xF6, 0xF7, 0xF7), Theme.TEXT_MUTED);
+            sairBtn.addActionListener(e -> {
+                controller.logout();
+                atualizarHeaderAuth();
+                new LoginCadastroDialog(
+                        this,
+                        controller,
+                        this::atualizarHeaderAuth,
+                        () -> System.exit(0)
+                ).setVisible(true);
+            });
+
+            authActionsPanel.add(perfilBtn);
+            authActionsPanel.add(sairBtn);
+        } else {
+            JButton entrarBtn = Theme.createButton("Entrar / Cadastrar", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+            entrarBtn.addActionListener(e -> abrirLoginECarregar(null));
+            authActionsPanel.add(entrarBtn);
+        }
+
+        JButton novoBtn = Theme.createButton("+ Publicar anúncio", Theme.GREEN, Color.WHITE);
+        novoBtn.addActionListener(e -> executarAcaoAutenticada(() ->
+                new NovoAnuncioDialog(this, controller, this::atualizarGrid).setVisible(true)
+        ));
+
+        authActionsPanel.add(novoBtn);
+        authActionsPanel.revalidate();
+        authActionsPanel.repaint();
+    }
+
+    private void executarAcaoAutenticada(Runnable acao) {
+        if (controller.isLogado()) {
+            acao.run();
+        } else {
+            abrirLoginECarregar(acao);
+        }
+    }
+
+    private void abrirLoginECarregar(Runnable acaoPosLogin) {
+        new LoginCadastroDialog(this, controller, () -> {
+            atualizarHeaderAuth();
+            if (acaoPosLogin != null) {
+                acaoPosLogin.run();
+            }
+        }).setVisible(true);
     }
 
     private JPanel createIntroBanner() {
@@ -241,7 +319,9 @@ public class MainFrame extends JFrame {
                 gridPanel.setLayout(new GridLayout(0, 3, 18, 18));
                 for (Anuncio item : itens) {
                     gridPanel.add(new AnuncioCard(item, anuncioSelecionado ->
-                            new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true)
+                            executarAcaoAutenticada(() ->
+                                    new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true)
+                            )
                     ));
                 }
             }
