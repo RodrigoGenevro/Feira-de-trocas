@@ -1,13 +1,15 @@
 package br.com.unimart.util;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Base64;
-import java.nio.charset.StandardCharsets;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 /**
  * Utilitário para geração de salt e hash seguro de senhas com PBKDF2.
@@ -31,13 +33,15 @@ public final class PasswordUtil {
     public static String gerarHash(String senha, String saltBase64) {
         try {
             byte[] salt = Base64.getDecoder().decode(saltBase64);
-            PBEKeySpec spec = new PBEKeySpec(senha.toCharArray(), salt, ITERATIONS, KEY_LENGTH);
+            char[] senhaChars = senha.toCharArray();
+            PBEKeySpec spec = new PBEKeySpec(senhaChars, salt, ITERATIONS, KEY_LENGTH);
             try {
                 SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM);
                 byte[] hash = factory.generateSecret(spec).getEncoded();
                 return Base64.getEncoder().encodeToString(hash);
             } finally {
                 spec.clearPassword();
+                Arrays.fill(senhaChars, '\0');
             }
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new IllegalStateException("Erro ao criptografar senha.", e);

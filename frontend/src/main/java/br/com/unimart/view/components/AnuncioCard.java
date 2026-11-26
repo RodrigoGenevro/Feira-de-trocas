@@ -7,11 +7,15 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.util.function.Consumer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -33,6 +37,9 @@ import br.com.unimart.util.Theme;
 public class AnuncioCard extends JPanel {
 
     private static final int CACHE_SIZE = 64;
+    private static final int IMAGE_WIDTH = 340;
+    private static final int IMAGE_HEIGHT = 150;
+    private static final Logger LOGGER = Logger.getLogger(AnuncioCard.class.getName());
     private static final Map<String, ImageIcon> IMAGE_CACHE =
             new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
                 @Override
@@ -162,15 +169,16 @@ public class AnuncioCard extends JPanel {
 
                     if (raw.getIconWidth() > 0) {
                         Image scaled = raw.getImage().getScaledInstance(
-                                340,
-                                150,
+                                IMAGE_WIDTH,
+                                IMAGE_HEIGHT,
                                 Image.SCALE_SMOOTH
                         );
 
                         return new ImageIcon(scaled);
                     }
 
-                } catch (Exception ignored) {
+                } catch (IOException | IllegalArgumentException e) {
+                    LOGGER.log(Level.FINE, "Não foi possível carregar a imagem do anúncio: " + urlStr, e);
                 }
 
                 return null;
@@ -189,7 +197,13 @@ public class AnuncioCard extends JPanel {
                         targetLabel.setIcon(icon);
                     }
 
-                } catch (Exception ignored) {
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOGGER.log(Level.FINE, "Carregamento da imagem interrompido: " + urlStr, e);
+                } catch (ExecutionException e) {
+                    LOGGER.log(Level.WARNING,
+                            "Falha inesperada ao carregar a imagem do anúncio: " + urlStr,
+                            e.getCause() != null ? e.getCause() : e);
                 }
             }
         }.execute();

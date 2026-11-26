@@ -1,11 +1,15 @@
 package br.com.unimart.repository;
 
-import br.com.unimart.model.Interesse;
-import br.com.unimart.util.DatabaseConfig;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import br.com.unimart.model.Interesse;
+import br.com.unimart.util.DatabaseConfig;
 
 /**
  * Camada de acesso a dados (DAO/Repository) responsável pelas operações SQL de Interesse.
@@ -32,7 +36,7 @@ public class InteresseRepository {
 
     public List<Interesse> listarTodos() throws SQLException {
         List<Interesse> lista = new ArrayList<>();
-        String sql = "SELECT i.*, a.titulo FROM interesses i " +
+        String sql = "SELECT i.id, i.anuncio_id, i.nome, i.mensagem, i.status, i.criado_em, a.titulo FROM interesses i " +
                      "JOIN anuncios a ON a.id = i.anuncio_id ORDER BY i.id DESC";
 
         try (Connection c = DatabaseConfig.getConnection();
