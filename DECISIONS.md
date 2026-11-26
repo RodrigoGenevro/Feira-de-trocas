@@ -31,11 +31,12 @@ This file records the decisions reflected in the current implementation.
 
 ## 26/11/2026 — Photo links
 
-- **Decision:** Require a public HTTP(S) image link for each listing rather than
-  uploading image files.
+- **Decision:** A photo is optional. When provided, its link must be a public
+  HTTP(S) URL; image files are not uploaded.
 - **Alternative considered:** Storing uploaded image files with the listing.
 - **Rationale:** The existing application displays images from URLs and has no
-  image-storage service.
+  image-storage service. Keeping the photo optional preserves the listing flow
+  when a publisher does not have an image link.
 
 ## 26/11/2026 — AI-powered listing descriptions
 

@@ -32,11 +32,12 @@ Este arquivo registra as decisões refletidas na implementação atual.
 
 ## 26/11/2026 — Links de fotos
 
-- **Decisão:** Exigir um link público de imagem HTTP(S) em cada anúncio, em vez
-  de enviar arquivos de imagem.
+- **Decisão:** A foto é opcional. Quando informada, deve usar um link público
+  HTTP(S); arquivos de imagem não são enviados.
 - **Alternativa considerada:** Armazenar arquivos de imagem junto ao anúncio.
 - **Motivo:** A aplicação atual exibe imagens a partir de URLs e não possui um
-  serviço de armazenamento de imagens.
+  serviço de armazenamento de imagens. Manter a foto opcional permite publicar
+  mesmo sem um link de imagem.
 
 ## 26/11/2026 — Descrições de anúncios com IA
 
