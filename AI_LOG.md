@@ -70,8 +70,8 @@ generated work, and decisions made after reviewing the output.
   “Trocaê.”
 - **What the AI generated:** Reworked the login and registration dialog into a
   two-panel access screen with a welcome panel, green gradient, and the existing
-  login and account-creation flows. Updated visible application branding in the
-  main window and related dialogs.
+  email/password login, quick account selection, and account-creation flows.
+  Updated visible application branding in the main window and related dialogs.
 - **What the team kept:** The reference's split welcome-and-access composition,
   adapted to the application's established green palette and Swing UI.
 - **What the team corrected or rejected, and why:** The supplied image was used

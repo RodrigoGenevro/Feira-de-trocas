@@ -74,8 +74,9 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
   nome visível para “Trocaê”.
 - **O que a IA gerou:** Reformulou o diálogo de login e cadastro como uma tela
   dividida em dois painéis, com área de boas-vindas, gradiente verde e
-  preservação dos fluxos existentes de login e criação de conta. Atualizou a
-  identidade visual exibida na janela principal e em diálogos relacionados.
+  preservação do login por e-mail e senha, seleção rápida de contas e criação
+  de conta. Atualizou a identidade visual exibida na janela principal e em
+  diálogos relacionados.
 - **O que o time aproveitou:** A composição dividida entre boas-vindas e acesso,
   adaptada à paleta verde já usada na aplicação e à interface Swing.
 - **O que o time corrigiu ou rejeitou, e por quê:** A imagem enviada serviu
