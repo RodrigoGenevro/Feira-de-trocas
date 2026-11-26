@@ -40,6 +40,8 @@ public class PerfilDialog extends JDialog {
     private JTextField turmaField;
     private JPasswordField novaSenhaField;
     private JPasswordField confirmarSenhaField;
+    private JButton salvarBtn;
+    private boolean salvando;
 
     public PerfilDialog(JFrame parent, FeiraController controller, Runnable onProfileUpdated) {
         super(parent, "Meu perfil", true);
@@ -111,7 +113,7 @@ public class PerfilDialog extends JDialog {
         form.add(confirmarSenhaField);
         form.add(Box.createVerticalStrut(18));
 
-        JButton salvarBtn = Theme.createButton("Salvar alterações", Theme.GREEN, Color.WHITE);
+        salvarBtn = Theme.createButton("Salvar alterações", Theme.GREEN, Color.WHITE);
         salvarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         salvarBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         salvarBtn.addActionListener(e -> salvarAlteracoes());
@@ -140,6 +142,12 @@ public class PerfilDialog extends JDialog {
     }
 
     private void salvarAlteracoes() {
+        if (salvando) {
+            return;
+        }
+        salvando = true;
+        salvarBtn.setEnabled(false);
+        salvarBtn.setText("Salvando...");
         String novoNome = nomeField.getText();
         String novoEmail = emailField.getText();
         String novaTurma = turmaField.getText();
@@ -173,11 +181,22 @@ public class PerfilDialog extends JDialog {
                                 "Erro ao atualizar perfil: " + causa.getMessage(),
                                 "Erro", JOptionPane.ERROR_MESSAGE);
                     }
+                    restaurarBotaoSalvar();
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
+                    restaurarBotaoSalvar();
+                    JOptionPane.showMessageDialog(PerfilDialog.this,
+                            "A atualização do perfil foi interrompida.",
+                            "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
+    }
+
+    private void restaurarBotaoSalvar() {
+        salvando = false;
+        salvarBtn.setEnabled(true);
+        salvarBtn.setText("Salvar alterações");
     }
 
     private JLabel criarLabel(String texto) {

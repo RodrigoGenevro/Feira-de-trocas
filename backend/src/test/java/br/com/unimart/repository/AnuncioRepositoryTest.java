@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import br.com.unimart.model.Anuncio;
 import br.com.unimart.model.Interesse;
 
 class AnuncioRepositoryTest {
@@ -38,7 +39,12 @@ class AnuncioRepositoryTest {
                     CREATE TABLE anuncios (
                         id INTEGER PRIMARY KEY,
                         titulo TEXT NOT NULL,
+                        descricao TEXT NOT NULL DEFAULT '',
+                        categoria TEXT NOT NULL DEFAULT '',
+                        modalidade TEXT NOT NULL DEFAULT 'TROCA',
                         nome TEXT NOT NULL,
+                        turma TEXT,
+                        foto TEXT,
                         usuario_id INTEGER,
                         status TEXT NOT NULL
                     )
@@ -128,6 +134,48 @@ class AnuncioRepositoryTest {
     }
 
     @Test
+    void anunciantePodeEditarOsCamposDoProprioAnuncioDisponivel() throws SQLException {
+        inserirAnuncio(1, "Livro antigo", 10, "Ana", "DISPONIVEL");
+        Anuncio anuncio = new Anuncio();
+        anuncio.setId(1);
+        anuncio.setTitulo("Livro atualizado");
+        anuncio.setDescricao("Em ótimo estado.");
+        anuncio.setCategoria("Livros");
+        anuncio.setModalidade("DOACAO");
+        anuncio.setFotoUrl("https://example.com/livro.jpg");
+
+        anuncioRepository.atualizarDisponivelDoUsuario(anuncio, 10, "Ana");
+
+        assertEquals("Livro atualizado", buscarTituloAnuncio(1));
+        assertEquals("Em ótimo estado.", buscarCampoAnuncio(1, "descricao"));
+        assertEquals("Livros", buscarCampoAnuncio(1, "categoria"));
+        assertEquals("DOACAO", buscarCampoAnuncio(1, "modalidade"));
+        assertEquals("https://example.com/livro.jpg", buscarCampoAnuncio(1, "foto"));
+    }
+
+    @Test
+    void impedeEdicaoDeAnuncioDeOutraPessoaOuQueNaoEstejaDisponivel() throws SQLException {
+        inserirAnuncio(1, "Anúncio da Ana", 10, "Ana", "DISPONIVEL");
+        inserirAnuncio(2, "Anúncio reservado", 10, "Ana", "RESERVADO");
+        Anuncio anuncio = new Anuncio();
+        anuncio.setId(1);
+        anuncio.setTitulo("Alterado sem autorização");
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> anuncioRepository.atualizarDisponivelDoUsuario(anuncio, 20, "Bia")
+        );
+
+        anuncio.setId(2);
+        assertThrows(
+                IllegalStateException.class,
+                () -> anuncioRepository.atualizarDisponivelDoUsuario(anuncio, 10, "Ana")
+        );
+        assertEquals("Anúncio da Ana", buscarTituloAnuncio(1));
+        assertEquals("Anúncio reservado", buscarTituloAnuncio(2));
+    }
+
+    @Test
     void anuncioSemUsuarioVinculadoBloqueiaInteresseDoMesmoNome() throws SQLException {
         inserirAnuncio(1, "Livro", null, "Ana", "DISPONIVEL");
 
@@ -190,6 +238,24 @@ class AnuncioRepositoryTest {
             try (ResultSet result = statement.executeQuery()) {
                 assertTrue(result.next());
                 return result.getInt(1);
+            }
+        }
+    }
+
+    private String buscarTituloAnuncio(int anuncioId) throws SQLException {
+        return buscarCampoAnuncio(anuncioId, "titulo");
+    }
+
+    private String buscarCampoAnuncio(int anuncioId, String campo) throws SQLException {
+        assertTrue(java.util.Set.of("titulo", "descricao", "categoria", "modalidade", "foto").contains(campo));
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT " + campo + " FROM anuncios WHERE id = ?"
+             )) {
+            statement.setInt(1, anuncioId);
+            try (ResultSet result = statement.executeQuery()) {
+                assertTrue(result.next());
+                return result.getString(campo);
             }
         }
     }

@@ -15,6 +15,10 @@ public class AuthService {
         this.usuarioRepository = new UsuarioRepository();
     }
 
+    public AuthService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
+
     public Usuario cadastrar(String nome, String email, String turma, String senha, String confirmarSenha) throws SQLException {
         if (senha == null || senha.length() < 6) {
             throw new IllegalArgumentException("A senha deve ter pelo menos 6 caracteres.");

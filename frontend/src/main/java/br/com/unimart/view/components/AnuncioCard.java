@@ -66,7 +66,13 @@ public class AnuncioCard extends JPanel {
     private void construirCard() {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
-        setBorder(new LineBorder(new Color(0xE5, 0xEB, 0xE8), 1, true));
+        boolean anuncioProprio = !permitirInteresse;
+        setBorder(new LineBorder(
+                anuncioProprio ? Theme.GREEN : new Color(0xE5, 0xEB, 0xE8),
+                anuncioProprio ? 2 : 1,
+                true
+        ));
+        getAccessibleContext().setAccessibleName("Anúncio: " + anuncio.getTitulo());
 
         // Topo (Imagem ou placeholder)
         JPanel imgContainer = new JPanel(new BorderLayout());
@@ -76,6 +82,7 @@ public class AnuncioCard extends JPanel {
         JLabel imgLabel = new JLabel("[ Item ]", JLabel.CENTER);
         imgLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
         imgLabel.setForeground(Theme.GREEN);
+        imgLabel.getAccessibleContext().setAccessibleName("Imagem do anúncio " + anuncio.getTitulo());
         imgContainer.add(imgLabel, BorderLayout.CENTER);
 
         if (anuncio.getFotoUrl() != null && !anuncio.getFotoUrl().isBlank()) {
@@ -89,13 +96,14 @@ public class AnuncioCard extends JPanel {
         body.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         JLabel pill = new JLabel(
-                "  " + anuncio.getModalidadeFormatada()
+                (anuncioProprio ? "  SEU ANÚNCIO · " : "  ")
+                        + anuncio.getModalidadeFormatada()
                         + " · " + anuncio.getCategoria() + "  "
         );
 
         pill.setOpaque(true);
-        pill.setBackground(Theme.PALE);
-        pill.setForeground(Theme.GREEN);
+        pill.setBackground(anuncioProprio ? Theme.INTRO_BG : Theme.PALE);
+        pill.setForeground(anuncioProprio ? Theme.DARK : Theme.GREEN);
         pill.setFont(new Font("SansSerif", Font.BOLD, 11));
         pill.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -113,6 +121,7 @@ public class AnuncioCard extends JPanel {
         desc.setBackground(Color.WHITE);
         desc.setRows(3);
         desc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        desc.getAccessibleContext().setAccessibleName("Descrição do anúncio");
 
         // Rodapé do Card
         JPanel foot = new JPanel(new BorderLayout(8, 0));
@@ -131,8 +140,16 @@ public class AnuncioCard extends JPanel {
                 Color.WHITE
         );
         btnInteresse.setEnabled(permitirInteresse);
+        btnInteresse.setFocusable(true);
+        btnInteresse.getAccessibleContext().setAccessibleName(
+                permitirInteresse ? "Demonstrar interesse em " + anuncio.getTitulo() : "Anúncio publicado por você"
+        );
         if (!permitirInteresse) {
+            btnInteresse.setBackground(Theme.PALE);
+            btnInteresse.setForeground(Theme.DARK);
             btnInteresse.setToolTipText("Você não pode demonstrar interesse no próprio anúncio.");
+        } else {
+            btnInteresse.setToolTipText("Demonstrar interesse neste anúncio");
         }
 
         btnInteresse.setFont(new Font("SansSerif", Font.BOLD, 12));

@@ -95,6 +95,32 @@ public class AnuncioRepository {
         return -1;
     }
 
+    public void atualizarDisponivelDoUsuario(
+            Anuncio anuncio, int usuarioId, String nomeUsuario
+    ) throws SQLException {
+        String sql = "UPDATE anuncios SET titulo = ?, descricao = ?, categoria = ?, modalidade = ?, foto = ? " +
+                     "WHERE id = ? AND status = ? " +
+                     "AND (usuario_id = ? OR (usuario_id IS NULL AND lower(nome) = lower(?)))";
+        try (Connection connection = abrirConexao();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, anuncio.getTitulo());
+            statement.setString(2, anuncio.getDescricao());
+            statement.setString(3, anuncio.getCategoria());
+            statement.setString(4, anuncio.getModalidade());
+            statement.setString(5, anuncio.getFotoUrl());
+            statement.setInt(6, anuncio.getId());
+            statement.setString(7, Anuncio.STATUS_DISPONIVEL);
+            statement.setInt(8, usuarioId);
+            statement.setString(9, nomeUsuario.trim());
+
+            if (statement.executeUpdate() != 1) {
+                throw new IllegalStateException(
+                        "O anúncio não pertence a você ou não está disponível para edição."
+                );
+            }
+        }
+    }
+
     public void aceitarInteresse(int interesseId, int usuarioId, String nomeUsuario) throws SQLException {
         try (Connection connection = abrirConexao()) {
             connection.setAutoCommit(false);

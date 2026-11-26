@@ -74,6 +74,8 @@ public class InteresseDialog extends BaseDialog {
         enviarBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         enviarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         enviarBtn.addActionListener(e -> {
+            enviarBtn.setEnabled(false);
+            enviarBtn.setText("Enviando...");
             String mensagem = msgArea.getText();
 
             new SwingWorker<Void, Void>() {
@@ -96,8 +98,13 @@ public class InteresseDialog extends BaseDialog {
                         } else {
                             showError("Não foi possível enviar: " + causa.getMessage());
                         }
+                        enviarBtn.setEnabled(true);
+                        enviarBtn.setText("Enviar interesse");
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
+                        enviarBtn.setEnabled(true);
+                        enviarBtn.setText("Enviar interesse");
+                        showError("O envio do interesse foi interrompido.");
                     }
                 }
             }.execute();

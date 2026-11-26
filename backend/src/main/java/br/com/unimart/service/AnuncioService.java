@@ -41,6 +41,12 @@ public class AnuncioService {
         return anuncio;
     }
 
+    public void atualizarAnuncio(Anuncio anuncio, int usuarioId, String nomeUsuario) throws SQLException {
+        validarAnuncioEIdentidade(anuncio.getId(), usuarioId, nomeUsuario);
+        anuncio.validar();
+        repository.atualizarDisponivelDoUsuario(anuncio, usuarioId, nomeUsuario);
+    }
+
     public void concluirAnuncio(int id, int usuarioId, String nomeUsuario) throws SQLException {
         validarAnuncioEIdentidade(id, usuarioId, nomeUsuario);
         repository.concluirAnuncio(id, usuarioId, nomeUsuario);

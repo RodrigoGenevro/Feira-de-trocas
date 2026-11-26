@@ -125,6 +125,13 @@ public class HistoricoAnunciosDialog extends JDialog {
     }
 
     private void carregarHistorico() {
+        anunciosPanel.removeAll();
+        JLabel loading = new JLabel("Carregando seus anúncios...", SwingConstants.CENTER);
+        loading.setForeground(Theme.TEXT_MUTED);
+        anunciosPanel.add(loading);
+        anunciosPanel.revalidate();
+        anunciosPanel.repaint();
+
         new SwingWorker<List<Anuncio>, Void>() {
             @Override
             protected List<Anuncio> doInBackground() throws SQLException {
@@ -170,11 +177,26 @@ public class HistoricoAnunciosDialog extends JDialog {
                     anunciosPanel.repaint();
                 } catch (java.util.concurrent.ExecutionException ex) {
                     Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+                    anunciosPanel.removeAll();
+                    JLabel error = new JLabel("Não foi possível carregar seus anúncios.", SwingConstants.CENTER);
+                    error.setForeground(Theme.TEXT_MUTED);
+                    anunciosPanel.add(error);
+                    anunciosPanel.revalidate();
+                    anunciosPanel.repaint();
                     JOptionPane.showMessageDialog(HistoricoAnunciosDialog.this,
                             "Erro ao carregar histórico: " + causa.getMessage(),
                             "Erro", JOptionPane.ERROR_MESSAGE);
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
+                    anunciosPanel.removeAll();
+                    JLabel error = new JLabel("O carregamento dos anúncios foi interrompido.", SwingConstants.CENTER);
+                    error.setForeground(Theme.TEXT_MUTED);
+                    anunciosPanel.add(error);
+                    anunciosPanel.revalidate();
+                    anunciosPanel.repaint();
+                    JOptionPane.showMessageDialog(HistoricoAnunciosDialog.this,
+                            "O carregamento do histórico foi interrompido.",
+                            "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
@@ -213,8 +235,8 @@ public class HistoricoAnunciosDialog extends JDialog {
 
     private JPanel criarCardAnuncio(Anuncio anuncio) {
         JPanel card = new JPanel(new BorderLayout(16, 0));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 176));
-        card.setPreferredSize(new Dimension(0, 176));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
+        card.setPreferredSize(new Dimension(0, 220));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -269,9 +291,35 @@ public class HistoricoAnunciosDialog extends JDialog {
         JPanel right = new JPanel();
         right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
         right.setOpaque(false);
-        right.setPreferredSize(new Dimension(176, 150));
+        right.setPreferredSize(new Dimension(190, 194));
         status.setAlignmentX(Component.CENTER_ALIGNMENT);
         right.add(status);
+
+        if (!concluido) {
+            JButton editarBtn = Theme.createButton(
+                    "Editar anúncio",
+                    new Color(0xEE, 0xF2, 0xF0),
+                    Theme.TEXT_MAIN
+            );
+            editarBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            editarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            boolean disponivel = Anuncio.STATUS_DISPONIVEL.equalsIgnoreCase(anuncio.getStatus());
+            editarBtn.setEnabled(disponivel);
+            if (!disponivel) {
+                editarBtn.setToolTipText("Só é possível editar anúncios disponíveis.");
+            }
+            editarBtn.addActionListener(e -> new NovoAnuncioDialog(
+                    (JFrame) getOwner(),
+                    controller,
+                    () -> {
+                        carregarHistorico();
+                        notificarAnuncioAtualizado();
+                    },
+                    anuncio
+            ).setVisible(true));
+            right.add(Box.createVerticalStrut(5));
+            right.add(editarBtn);
+        }
 
         JButton interessesBtn = Theme.createButton(
                 "Ver interesses",
@@ -297,7 +345,7 @@ public class HistoricoAnunciosDialog extends JDialog {
             );
             statusBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
             statusBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-            statusBtn.addActionListener(e -> atualizarStatusAnuncio(anuncio, reservado));
+            statusBtn.addActionListener(e -> atualizarStatusAnuncio(anuncio, reservado, statusBtn));
             right.add(Box.createVerticalStrut(5));
             right.add(statusBtn);
 
@@ -309,7 +357,7 @@ public class HistoricoAnunciosDialog extends JDialog {
                 );
                 concluirBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
                 concluirBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-                concluirBtn.addActionListener(e -> atualizarStatusAnuncio(anuncio, false));
+                concluirBtn.addActionListener(e -> atualizarStatusAnuncio(anuncio, false, concluirBtn));
                 right.add(Box.createVerticalStrut(5));
                 right.add(concluirBtn);
             }
@@ -320,7 +368,7 @@ public class HistoricoAnunciosDialog extends JDialog {
         return card;
     }
 
-    private void atualizarStatusAnuncio(Anuncio anuncio, boolean reabrir) {
+    private void atualizarStatusAnuncio(Anuncio anuncio, boolean reabrir, JButton statusButton) {
         String acao;
         if (reabrir) {
             acao = "reabrir";
@@ -340,6 +388,9 @@ public class HistoricoAnunciosDialog extends JDialog {
             return;
         }
 
+        String textoOriginal = statusButton.getText();
+        statusButton.setEnabled(false);
+        statusButton.setText("Atualizando...");
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws SQLException {
@@ -365,8 +416,18 @@ public class HistoricoAnunciosDialog extends JDialog {
                             "Erro",
                             JOptionPane.ERROR_MESSAGE
                     );
+                    statusButton.setEnabled(true);
+                    statusButton.setText(textoOriginal);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    statusButton.setEnabled(true);
+                    statusButton.setText(textoOriginal);
+                    JOptionPane.showMessageDialog(
+                            HistoricoAnunciosDialog.this,
+                            "A atualização do anúncio foi interrompida.",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE
+                    );
                 }
             }
         }.execute();

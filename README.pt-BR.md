@@ -1,8 +1,8 @@
-# UniMart — Feira de Trocas do Campus
+# Trocaê — Feira de Trocas do Campus
 
 [English](README.md) · **Português (Brasil)**
 
-O UniMart é um aplicativo desktop para estudantes trocarem ou doarem livros,
+O Trocaê é um aplicativo desktop para estudantes trocarem ou doarem livros,
 materiais escolares e equipamentos usados dentro da comunidade Senac.
 
 ## Equipe
@@ -16,7 +16,7 @@ materiais escolares e equipamentos usados dentro da comunidade Senac.
 ## Problema e solução
 
 Estudantes precisam de materiais que outras pessoas já não usam, mas as ofertas
-ficam espalhadas por canais informais. O UniMart reúne anúncios, busca de itens
+ficam espalhadas por canais informais. O Trocaê reúne anúncios, busca de itens
 e mensagens de interesse em um só lugar.
 
 ## Tecnologias
@@ -35,8 +35,15 @@ e mensagens de interesse em um só lugar.
 - Envio de mensagens de interesse em anúncios disponíveis
 - Controles do anunciante para ver interesses, aceitar um deles e reservar o
   anúncio, reabrir uma reserva ou concluir o anúncio
+- Edição de anúncios disponíveis pelo próprio anunciante em **Meus anúncios**
+- Grade responsiva de anúncios, filtros acessíveis e chips removíveis para os
+  filtros ativos
+- Backup e restauração do SQLite, com verificação de integridade antes da troca
 
-O banco de dados é local à máquina; não há banco compartilhado hospedado.
+O banco de dados é local à máquina. Use **Banco de dados** no cabeçalho para
+criar um snapshot consistente do SQLite ou restaurar um backup validado. O banco
+atual é preservado quando a validação ou a restauração falha. Não há banco
+compartilhado hospedado.
 A geração de descrições com IA foi adiada; o aplicativo não envia dados dos
 anúncios a um provedor externo de IA.
 

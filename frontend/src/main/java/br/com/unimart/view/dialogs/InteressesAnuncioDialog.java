@@ -84,6 +84,13 @@ public class InteressesAnuncioDialog extends JDialog {
     }
 
     private void carregarInteresses() {
+        interessesPanel.removeAll();
+        JLabel loading = new JLabel("Carregando interesses...", SwingConstants.CENTER);
+        loading.setForeground(Theme.TEXT_MUTED);
+        interessesPanel.add(loading);
+        interessesPanel.revalidate();
+        interessesPanel.repaint();
+
         new SwingWorker<List<Interesse>, Void>() {
             @Override
             protected List<Interesse> doInBackground() throws SQLException {
@@ -106,9 +113,23 @@ public class InteressesAnuncioDialog extends JDialog {
                     interessesPanel.revalidate();
                     interessesPanel.repaint();
                 } catch (java.util.concurrent.ExecutionException e) {
-                    exibirErro("Não foi possível carregar os interesses", e.getCause());
+                    Throwable causa = e.getCause() != null ? e.getCause() : e;
+                    interessesPanel.removeAll();
+                    JLabel error = new JLabel("Não foi possível carregar os interesses.", SwingConstants.CENTER);
+                    error.setForeground(Theme.TEXT_MUTED);
+                    interessesPanel.add(error);
+                    interessesPanel.revalidate();
+                    interessesPanel.repaint();
+                    exibirErro("Não foi possível carregar os interesses", causa);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    interessesPanel.removeAll();
+                    JLabel error = new JLabel("O carregamento dos interesses foi interrompido.", SwingConstants.CENTER);
+                    error.setForeground(Theme.TEXT_MUTED);
+                    interessesPanel.add(error);
+                    interessesPanel.revalidate();
+                    interessesPanel.repaint();
+                    exibirErro("O carregamento dos interesses foi interrompido", e);
                 }
             }
         }.execute();
@@ -157,7 +178,7 @@ public class InteressesAnuncioDialog extends JDialog {
                 && Anuncio.STATUS_DISPONIVEL.equalsIgnoreCase(anuncio.getStatus())) {
             JButton aceitar = Theme.createButton("Aceitar e reservar", Theme.GREEN, Color.WHITE);
             aceitar.setFont(new Font("SansSerif", Font.BOLD, 11));
-            aceitar.addActionListener(e -> aceitarInteresse(interesse));
+            aceitar.addActionListener(e -> aceitarInteresse(interesse, aceitar));
             card.add(aceitar, BorderLayout.SOUTH);
         }
 
@@ -182,7 +203,7 @@ public class InteressesAnuncioDialog extends JDialog {
         return empty;
     }
 
-    private void aceitarInteresse(Interesse interesse) {
+    private void aceitarInteresse(Interesse interesse, JButton aceitarButton) {
         int resposta = JOptionPane.showConfirmDialog(
                 this,
                 "Aceitar o interesse de " + interesse.getNomeInteressado()
@@ -195,6 +216,8 @@ public class InteressesAnuncioDialog extends JDialog {
             return;
         }
 
+        aceitarButton.setEnabled(false);
+        aceitarButton.setText("Reservando...");
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws SQLException {
@@ -212,9 +235,14 @@ public class InteressesAnuncioDialog extends JDialog {
                     dispose();
                 } catch (java.util.concurrent.ExecutionException e) {
                     exibirErro("Não foi possível aceitar o interesse", e.getCause());
+                    aceitarButton.setEnabled(true);
+                    aceitarButton.setText("Aceitar e reservar");
                     carregarInteresses();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    aceitarButton.setEnabled(true);
+                    aceitarButton.setText("Aceitar e reservar");
+                    exibirErro("A reserva do anúncio foi interrompida", e);
                 }
             }
         }.execute();

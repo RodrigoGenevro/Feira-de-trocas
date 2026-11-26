@@ -58,6 +58,9 @@ public class LoginCadastroDialog extends JDialog {
     private JTextField cadTurmaField;
     private JPasswordField cadSenhaField;
     private JPasswordField cadConfirmarField;
+    private JButton entrarBtn;
+    private JButton cadastrarBtn;
+    private boolean autenticacaoEmProgresso;
 
     private JComboBox<String> loginContaCombo;
     private final Map<String, String> emailsPorConta = new HashMap<>();
@@ -259,7 +262,7 @@ public class LoginCadastroDialog extends JDialog {
         panel.add(loginSenhaField);
         panel.add(Box.createVerticalStrut(24));
 
-        JButton entrarBtn = Theme.createButton("Entrar", Theme.GREEN, Color.WHITE);
+        entrarBtn = Theme.createButton("Entrar", Theme.GREEN, Color.WHITE);
         entrarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         entrarBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         entrarBtn.addActionListener(e -> executarLogin());
@@ -308,7 +311,7 @@ public class LoginCadastroDialog extends JDialog {
         panel.add(cadConfirmarField);
         panel.add(Box.createVerticalStrut(14));
 
-        JButton cadastrarBtn = Theme.createButton("Criar conta e entrar", Theme.GREEN, Color.WHITE);
+        cadastrarBtn = Theme.createButton("Criar conta e entrar", Theme.GREEN, Color.WHITE);
         cadastrarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         cadastrarBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         cadastrarBtn.addActionListener(e -> executarCadastro());
@@ -324,6 +327,10 @@ public class LoginCadastroDialog extends JDialog {
     }
 
     private void executarLogin() {
+        if (autenticacaoEmProgresso) {
+            return;
+        }
+        atualizarEstadoAutenticacao(true, false);
         String email = loginEmailField.getText();
         String senha = new String(loginSenhaField.getPassword());
 
@@ -343,6 +350,7 @@ public class LoginCadastroDialog extends JDialog {
                         onAuthSuccess.run();
                     }
                 } catch (java.util.concurrent.ExecutionException ex) {
+                    atualizarEstadoAutenticacao(false, false);
                     Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
                     if (causa instanceof IllegalArgumentException) {
                         JOptionPane.showMessageDialog(LoginCadastroDialog.this, causa.getMessage(),
@@ -353,12 +361,20 @@ public class LoginCadastroDialog extends JDialog {
                     }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
+                    atualizarEstadoAutenticacao(false, false);
+                    JOptionPane.showMessageDialog(LoginCadastroDialog.this,
+                            "A tentativa de login foi interrompida.",
+                            "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
     }
 
     private void executarCadastro() {
+        if (autenticacaoEmProgresso) {
+            return;
+        }
+        atualizarEstadoAutenticacao(true, true);
         String nome = cadNomeField.getText();
         String email = cadEmailField.getText();
         String turma = cadTurmaField.getText();
@@ -383,6 +399,7 @@ public class LoginCadastroDialog extends JDialog {
                         onAuthSuccess.run();
                     }
                 } catch (java.util.concurrent.ExecutionException ex) {
+                    atualizarEstadoAutenticacao(false, true);
                     Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
                     if (causa instanceof IllegalArgumentException) {
                         JOptionPane.showMessageDialog(LoginCadastroDialog.this, causa.getMessage(),
@@ -394,9 +411,21 @@ public class LoginCadastroDialog extends JDialog {
                     }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
+                    atualizarEstadoAutenticacao(false, true);
+                    JOptionPane.showMessageDialog(LoginCadastroDialog.this,
+                            "A criação da conta foi interrompida.",
+                            "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
+    }
+
+    private void atualizarEstadoAutenticacao(boolean emProgresso, boolean cadastro) {
+        autenticacaoEmProgresso = emProgresso;
+        entrarBtn.setEnabled(!emProgresso);
+        cadastrarBtn.setEnabled(!emProgresso);
+        entrarBtn.setText(emProgresso && !cadastro ? "Entrando..." : "Entrar");
+        cadastrarBtn.setText(emProgresso && cadastro ? "Criando conta..." : "Criar conta e entrar");
     }
 
     private JLabel criarLabel(String texto) {
