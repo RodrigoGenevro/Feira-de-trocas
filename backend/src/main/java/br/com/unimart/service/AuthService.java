@@ -94,7 +94,11 @@ public class AuthService {
     }
 
     public List<Usuario> listarContas() throws SQLException {
-        return usuarioRepository.listarTodos();
+        return usuarioRepository.listarUsuariosAtivos();
+    }
+
+    public List<Usuario> listarContasCadastradas() throws SQLException {
+        return usuarioRepository.listarUsuariosAtivos();
     }
 
     public List<Usuario> listarUsuariosCadastrados() throws SQLException {

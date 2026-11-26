@@ -43,6 +43,13 @@ Copiem o modelo abaixo sempre que precisarem de uma entrada nova.
 - **O que o time corrigiu ou rejeitou, e por quê:** o design embora funcional não tinha uma aparencia apresentavel e com os problemas no github não pode ser aproveitado
 
 
+### 25/11/2026 — Criar design da tela inicial
+
+- **Prompt principal:** melhore o design das telas
+- **O que a IA gerou:** um bom design mas com cores que faziam os botões ficassem escondidos 
+- **O que o time aproveitou:** o design em si mas não as cores
+- **O que o time corrigiu ou rejeitou, e por quê:** rejeitamos as cores para fazer com que os botões ficassem mais visiveis para o usuario
+
 ## Ferramentas
 
 Chatgpt e gemini
