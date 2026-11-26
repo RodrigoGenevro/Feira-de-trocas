@@ -1,10 +1,10 @@
 package br.com.unimart.repository;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,45 +16,65 @@ import br.com.unimart.util.DatabaseConfig;
  */
 public class InteresseRepository {
 
+    private final String jdbcUrl;
+
+    public InteresseRepository() {
+        this(DatabaseConfig.getActiveDbUrl());
+    }
+
+    InteresseRepository(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
+    }
+
     public void salvar(Interesse interesse) throws SQLException {
-        String sql = "INSERT INTO interesses(anuncio_id, nome, mensagem) VALUES(?,?,?)";
-        try (Connection c = DatabaseConfig.getConnection();
-             PreparedStatement p = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String sql = "INSERT INTO interesses(anuncio_id, nome, mensagem) " +
+                     "SELECT ?, ?, ? WHERE EXISTS (" +
+                     "SELECT 1 FROM anuncios WHERE id = ? AND status = 'DISPONIVEL')";
+        try (Connection c = abrirConexao();
+             PreparedStatement p = c.prepareStatement(sql)) {
 
             p.setInt(1, interesse.getAnuncioId());
             p.setString(2, interesse.getNomeInteressado());
             p.setString(3, interesse.getMensagem());
-            p.executeUpdate();
-
-            try (ResultSet keys = p.getGeneratedKeys()) {
-                if (keys.next()) {
-                    interesse.setId(keys.getInt(1));
-                }
+            p.setInt(4, interesse.getAnuncioId());
+            if (p.executeUpdate() != 1) {
+                throw new IllegalArgumentException("Este anúncio não está mais disponível para interesse.");
             }
         }
     }
 
-    public List<Interesse> listarTodos() throws SQLException {
+    public List<Interesse> listarPorAnuncio(int anuncioId, int usuarioId, String nomeUsuario) throws SQLException {
         List<Interesse> lista = new ArrayList<>();
         String sql = "SELECT i.id, i.anuncio_id, i.nome, i.mensagem, i.status, i.criado_em, a.titulo FROM interesses i " +
-                     "JOIN anuncios a ON a.id = i.anuncio_id ORDER BY i.id DESC";
+                     "JOIN anuncios a ON a.id = i.anuncio_id " +
+                     "WHERE a.id = ? AND (a.usuario_id = ? OR " +
+                     "(a.usuario_id IS NULL AND lower(a.nome) = lower(?))) " +
+                     "ORDER BY i.id DESC";
 
-        try (Connection c = DatabaseConfig.getConnection();
-             Statement s = c.createStatement();
-             ResultSet r = s.executeQuery(sql)) {
+        try (Connection c = abrirConexao();
+             PreparedStatement statement = c.prepareStatement(sql)) {
+            statement.setInt(1, anuncioId);
+            statement.setInt(2, usuarioId);
+            statement.setString(3, nomeUsuario.trim());
 
-            while (r.next()) {
-                Interesse i = new Interesse();
-                i.setId(r.getInt("id"));
-                i.setAnuncioId(r.getInt("anuncio_id"));
-                i.setNomeInteressado(r.getString("nome"));
-                i.setMensagem(r.getString("mensagem"));
-                i.setStatus(r.getString("status"));
-                i.setCriadoEm(r.getString("criado_em"));
-                i.setTituloAnuncio(r.getString("titulo"));
-                lista.add(i);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    Interesse interesse = new Interesse();
+                    interesse.setId(result.getInt("id"));
+                    interesse.setAnuncioId(result.getInt("anuncio_id"));
+                    interesse.setNomeInteressado(result.getString("nome"));
+                    interesse.setMensagem(result.getString("mensagem"));
+                    interesse.setStatus(result.getString("status"));
+                    interesse.setCriadoEm(result.getString("criado_em"));
+                    interesse.setTituloAnuncio(result.getString("titulo"));
+                    lista.add(interesse);
+                }
             }
         }
         return lista;
+    }
+
+    private Connection abrirConexao() throws SQLException {
+        return DriverManager.getConnection(jdbcUrl);
     }
 }

@@ -1,4 +1,6 @@
-backend/target/
+/target/
+/backend/target/
+/frontend/target/
 database/*.db
 database/*.db-shm
 database/*.db-wal

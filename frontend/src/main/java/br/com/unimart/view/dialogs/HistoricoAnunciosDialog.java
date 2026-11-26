@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -15,6 +14,7 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -101,7 +101,7 @@ public class HistoricoAnunciosDialog extends JDialog {
         main.setBackground(Theme.BG_MAIN);
         main.setBorder(new EmptyBorder(18, 28, 24, 28));
 
-        resumoPanel = new JPanel(new GridLayout(1, 3, 14, 0));
+        resumoPanel = new JPanel(new GridLayout(1, 4, 10, 0));
         resumoPanel.setOpaque(false);
         resumoPanel.setPreferredSize(new Dimension(0, 92));
 
@@ -132,10 +132,13 @@ public class HistoricoAnunciosDialog extends JDialog {
                 try {
                     List<Anuncio> anuncios = get();
                     int disponiveis = 0;
+                    int reservados = 0;
                     int concluidos = 0;
                     for (Anuncio anuncio : anuncios) {
-                        if ("CONCLUIDO".equalsIgnoreCase(anuncio.getStatus())) {
+                        if (Anuncio.STATUS_CONCLUIDO.equalsIgnoreCase(anuncio.getStatus())) {
                             concluidos++;
+                        } else if (Anuncio.STATUS_RESERVADO.equalsIgnoreCase(anuncio.getStatus())) {
+                            reservados++;
                         } else {
                             disponiveis++;
                         }
@@ -144,7 +147,8 @@ public class HistoricoAnunciosDialog extends JDialog {
                     resumoPanel.removeAll();
                     resumoPanel.add(criarResumo("TOTAL", String.valueOf(anuncios.size()), "anúncios publicados", Theme.DARK));
                     resumoPanel.add(criarResumo("DISPONÍVEIS", String.valueOf(disponiveis), "recebendo interesse", Theme.GREEN));
-                    resumoPanel.add(criarResumo("CONCLUÍDOS", String.valueOf(concluidos), "negociações finalizadas", new Color(0xB56A35)));
+                    resumoPanel.add(criarResumo("RESERVADOS", String.valueOf(reservados), "em negociação", new Color(0x397A68)));
+                    resumoPanel.add(criarResumo("CONCLUÍDOS", String.valueOf(concluidos), "finalizados", new Color(0xB56A35)));
 
                     anunciosPanel.removeAll();
                     if (anuncios.isEmpty()) {
@@ -205,8 +209,8 @@ public class HistoricoAnunciosDialog extends JDialog {
 
     private JPanel criarCardAnuncio(Anuncio anuncio) {
         JPanel card = new JPanel(new BorderLayout(16, 0));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 112));
-        card.setPreferredSize(new Dimension(0, 112));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 176));
+        card.setPreferredSize(new Dimension(0, 176));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -247,8 +251,10 @@ public class HistoricoAnunciosDialog extends JDialog {
         info.add(data);
         card.add(info, BorderLayout.CENTER);
 
-        boolean concluido = "CONCLUIDO".equalsIgnoreCase(anuncio.getStatus());
-        JLabel status = new JLabel(concluido ? "✓ Concluído" : "● Disponível", SwingConstants.CENTER);
+        boolean concluido = Anuncio.STATUS_CONCLUIDO.equalsIgnoreCase(anuncio.getStatus());
+        boolean reservado = Anuncio.STATUS_RESERVADO.equalsIgnoreCase(anuncio.getStatus());
+        String textoStatus = concluido ? "✓ Concluído" : reservado ? "● Reservado" : "● Disponível";
+        JLabel status = new JLabel(textoStatus, SwingConstants.CENTER);
         status.setOpaque(true);
         status.setPreferredSize(new Dimension(118, 32));
         status.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -256,12 +262,99 @@ public class HistoricoAnunciosDialog extends JDialog {
         status.setBackground(concluido ? new Color(0xF7E9DE) : new Color(0xDFF1EA));
         status.setBorder(BorderFactory.createEmptyBorder(7, 12, 7, 12));
 
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 22));
+        JPanel right = new JPanel();
+        right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
         right.setOpaque(false);
+        right.setPreferredSize(new Dimension(176, 150));
+        status.setAlignmentX(Component.CENTER_ALIGNMENT);
         right.add(status);
+
+        JButton interessesBtn = Theme.createButton(
+                "Ver interesses",
+                new Color(0xEE, 0xF2, 0xF0),
+                Theme.TEXT_MAIN
+        );
+        interessesBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        interessesBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        interessesBtn.addActionListener(e ->
+                new InteressesAnuncioDialog(this, controller, anuncio, this::carregarHistorico).setVisible(true)
+        );
+        right.add(Box.createVerticalStrut(5));
+        right.add(interessesBtn);
+
+        if (!concluido) {
+            JButton statusBtn = Theme.createButton(
+                    reservado ? "Reabrir anúncio" : "Encerrar anúncio",
+                    reservado ? new Color(0xEE, 0xF2, 0xF0) : new Color(0xF7, 0xE9, 0xDE),
+                    reservado ? Theme.TEXT_MAIN : new Color(0xA05F38)
+            );
+            statusBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            statusBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            statusBtn.addActionListener(e -> atualizarStatusAnuncio(anuncio, reservado));
+            right.add(Box.createVerticalStrut(5));
+            right.add(statusBtn);
+
+            if (reservado) {
+                JButton concluirBtn = Theme.createButton(
+                        "Concluir anúncio",
+                        new Color(0xF7, 0xE9, 0xDE),
+                        new Color(0xA0, 0x5F, 0x38)
+                );
+                concluirBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+                concluirBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+                concluirBtn.addActionListener(e -> atualizarStatusAnuncio(anuncio, false));
+                right.add(Box.createVerticalStrut(5));
+                right.add(concluirBtn);
+            }
+        }
+
         card.add(right, BorderLayout.EAST);
 
         return card;
+    }
+
+    private void atualizarStatusAnuncio(Anuncio anuncio, boolean reabrir) {
+        String acao = reabrir ? "reabrir" : "encerrar";
+        int resposta = JOptionPane.showConfirmDialog(
+                this,
+                "Deseja " + acao + " o anúncio \"" + anuncio.getTitulo() + "\"?",
+                "Confirmar alteração",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        if (resposta != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws SQLException {
+                if (reabrir) {
+                    controller.reabrirAnuncio(anuncio.getId());
+                } else {
+                    controller.concluirAnuncio(anuncio.getId());
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    carregarHistorico();
+                } catch (java.util.concurrent.ExecutionException e) {
+                    Throwable causa = e.getCause() != null ? e.getCause() : e;
+                    JOptionPane.showMessageDialog(
+                            HistoricoAnunciosDialog.this,
+                            "Não foi possível " + acao + " o anúncio: " + causa.getMessage(),
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }.execute();
     }
 
     private JPanel criarEstadoVazio() {

@@ -115,7 +115,8 @@ public class NovoAnuncioDialog extends BaseDialog {
         formPanel.add(twoCols);
 
         formPanel.add(Box.createVerticalStrut(10));
-        formPanel.add(Theme.createFieldLabel("Link da foto (opcional)"));
+        formPanel.add(Theme.createFieldLabel("Link da foto *"));
+        fotoField.setToolTipText("Informe um link público de imagem iniciado por http:// ou https://.");
         formPanel.add(fotoField);
         formPanel.add(Box.createVerticalStrut(18));
 

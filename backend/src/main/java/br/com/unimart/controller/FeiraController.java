@@ -87,8 +87,26 @@ public class FeiraController {
         interesseService.registrarInteresse(interesse);
     }
 
-    public List<Interesse> buscarInteresses() throws SQLException {
-        return interesseService.listarInteresses();
+    public List<Interesse> buscarInteressesDoAnuncio(int anuncioId) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        return interesseService.listarInteressesDoAnuncio(
+                anuncioId, usuario.getId(), usuario.getNome()
+        );
+    }
+
+    public void aceitarInteresse(int interesseId) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        anuncioService.aceitarInteresse(interesseId, usuario.getId(), usuario.getNome());
+    }
+
+    public void concluirAnuncio(int anuncioId) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        anuncioService.concluirAnuncio(anuncioId, usuario.getId(), usuario.getNome());
+    }
+
+    public void reabrirAnuncio(int anuncioId) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        anuncioService.reabrirAnuncio(anuncioId, usuario.getId(), usuario.getNome());
     }
 
     public List<Anuncio> buscarHistoricoUsuario() throws SQLException {
@@ -103,5 +121,12 @@ public class FeiraController {
 
     public List<Usuario> buscarUsuariosCadastrados() throws SQLException {
         return authService.listarUsuariosCadastrados();
+    }
+
+    private Usuario usuarioAutenticado() {
+        if (!isLogado()) {
+            throw new IllegalStateException("É necessário estar conectado.");
+        }
+        return usuarioLogado;
     }
 }

@@ -6,17 +6,22 @@ package br.com.unimart.model;
  */
 public class Interesse extends EntidadeBase {
 
+    public static final String STATUS_PENDENTE = "PENDENTE";
+    public static final String STATUS_ACEITO = "ACEITO";
+    public static final String STATUS_ENCERRADO = "ENCERRADO";
+    public static final String STATUS_CANCELADO = "CANCELADO";
+
     private int anuncioId;
     private String nomeInteressado;
     private String mensagem;
     private String tituloAnuncio;
 
     public Interesse() {
-        super(null, "PENDENTE", null);
+        super(null, STATUS_PENDENTE, null);
     }
 
     public Interesse(int anuncioId, String nomeInteressado, String mensagem) {
-        super(null, "PENDENTE", null);
+        super(null, STATUS_PENDENTE, null);
         setAnuncioId(anuncioId);
         setNomeInteressado(nomeInteressado);
         setMensagem(mensagem);

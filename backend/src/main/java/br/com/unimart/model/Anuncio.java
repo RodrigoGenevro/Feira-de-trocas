@@ -1,10 +1,16 @@
 package br.com.unimart.model;
 
+import java.net.URI;
+
 /**
  * Representa um item anunciado para troca ou doação.
  * Herda de EntidadeBase e aplica encapsulamento com validações nos setters.
  */
 public class Anuncio extends EntidadeBase {
+
+    public static final String STATUS_DISPONIVEL = "DISPONIVEL";
+    public static final String STATUS_RESERVADO = "RESERVADO";
+    public static final String STATUS_CONCLUIDO = "CONCLUIDO";
 
     private String titulo;
     private String descricao;
@@ -16,13 +22,13 @@ public class Anuncio extends EntidadeBase {
     private Integer usuarioId;
 
     public Anuncio() {
-        super(null, "DISPONIVEL", null);
+        super(null, STATUS_DISPONIVEL, null);
     }
 
     public Anuncio(Integer id, String titulo, String descricao, String categoria,
                    String modalidade, String nomeAutor, String turma, String fotoUrl,
                    String status, String criadoEm) {
-        super(id, status != null ? status : "DISPONIVEL", criadoEm);
+        super(id, status != null ? status : STATUS_DISPONIVEL, criadoEm);
         setTitulo(titulo);
         setDescricao(descricao);
         setCategoria(categoria);
@@ -121,6 +127,24 @@ public class Anuncio extends EntidadeBase {
         }
         if (descricao == null || descricao.isBlank()) {
             throw new IllegalArgumentException("A descrição do item é obrigatória.");
+        }
+        validarFotoUrl();
+    }
+
+    private void validarFotoUrl() {
+        if (fotoUrl == null || fotoUrl.isBlank()) {
+            throw new IllegalArgumentException("O link da foto é obrigatório.");
+        }
+
+        try {
+            URI uri = URI.create(fotoUrl);
+            String esquema = uri.getScheme();
+            if (uri.getHost() == null
+                    || (!"http".equalsIgnoreCase(esquema) && !"https".equalsIgnoreCase(esquema))) {
+                throw new IllegalArgumentException("Informe um link de foto válido (HTTP ou HTTPS).");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Informe um link de foto válido (HTTP ou HTTPS).", e);
         }
     }
 }

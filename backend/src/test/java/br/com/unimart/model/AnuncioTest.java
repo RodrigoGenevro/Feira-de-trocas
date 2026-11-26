@@ -1,0 +1,33 @@
+package br.com.unimart.model;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.junit.jupiter.api.Test;
+
+class AnuncioTest {
+
+    @Test
+    void validarExigeLinkDeFotoHttpOuHttps() {
+        Anuncio anuncio = criarAnuncio("");
+
+        assertThrows(IllegalArgumentException.class, anuncio::validar);
+        assertDoesNotThrow(() -> criarAnuncio("https://example.com/item.jpg").validar());
+    }
+
+    @Test
+    void validarRejeitaEsquemasDeFotoQueNaoSaoHttp() {
+        Anuncio anuncio = criarAnuncio("file:///tmp/item.jpg");
+
+        assertThrows(IllegalArgumentException.class, anuncio::validar);
+    }
+
+    private Anuncio criarAnuncio(String fotoUrl) {
+        Anuncio anuncio = new Anuncio();
+        anuncio.setNomeAutor("Pessoa anunciante");
+        anuncio.setTitulo("Livro de exemplo");
+        anuncio.setDescricao("Livro em bom estado.");
+        anuncio.setFotoUrl(fotoUrl);
+        return anuncio;
+    }
+}
