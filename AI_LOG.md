@@ -78,3 +78,15 @@ generated work, and decisions made after reviewing the output.
   as visual direction only; the screen was implemented with native Swing
   components and Java2D shapes rather than embedding the image. Tests were not
   run for this change.
+### 26/11/2026 — Fixing the “Seu anúncio” button color
+
+- **Main prompt:** When the listing is mine, the button color looks odd; make it
+  the same color as the other buttons.
+- **What the AI generated:** In `AnuncioCard.java`, the disabled own-listing
+  button now uses a custom `BasicButtonUI` that always paints the text in white
+  and keeps the `Theme.GREEN` background, ignoring the darkening effect Swing
+  applies to disabled buttons.
+- **What the team kept:** The “Seu anúncio” button now looks exactly like the
+  other buttons while remaining non-clickable and keeping its tooltip.
+- **What the team corrected or rejected, and why:** Nothing; compiling with
+  `javac` (including the backend models) passed without errors.
