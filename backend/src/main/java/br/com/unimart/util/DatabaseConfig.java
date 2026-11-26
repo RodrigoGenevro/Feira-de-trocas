@@ -65,8 +65,16 @@ public final class DatabaseConfig {
                     "nome TEXT NOT NULL, " +
                     "turma TEXT, " +
                     "foto TEXT, " +
+                    "usuario_id INTEGER, " +
                     "status TEXT NOT NULL DEFAULT 'DISPONIVEL', " +
-                    "criado_em TEXT DEFAULT CURRENT_TIMESTAMP)");
+                    "criado_em TEXT DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY(usuario_id) REFERENCES usuarios(id))");
+
+            try {
+                s.executeUpdate("ALTER TABLE anuncios ADD COLUMN usuario_id INTEGER");
+            } catch (SQLException ignored) {
+                // A coluna já existe em bancos criados pela versão atual.
+            }
 
             s.executeUpdate("CREATE TABLE IF NOT EXISTS interesses (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +

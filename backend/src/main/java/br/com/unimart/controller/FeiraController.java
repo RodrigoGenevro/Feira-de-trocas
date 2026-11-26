@@ -74,6 +74,9 @@ public class FeiraController {
         novo.setCategoria(categoria);
         novo.setModalidade(modalidade);
         novo.setFotoUrl(fotoUrl);
+        if (isLogado()) {
+            novo.setUsuarioId(usuarioLogado.getId());
+        }
 
         return anuncioService.publicarAnuncio(novo);
     }
@@ -86,5 +89,23 @@ public class FeiraController {
 
     public List<Interesse> buscarInteresses() throws SQLException {
         return interesseService.listarInteresses();
+    }
+
+    public List<Anuncio> buscarHistoricoUsuario() throws SQLException {
+        if (!isLogado()) {
+            throw new IllegalStateException("É necessário estar conectado para ver o histórico.");
+        }
+        return anuncioService.listarHistoricoUsuario(
+                usuarioLogado.getId(),
+                usuarioLogado.getNome()
+        );
+    }
+
+    public List<Usuario> listarContasCadastradas() throws SQLException {
+        return authService.listarContasCadastradas();
+    }
+
+    public List<Usuario> buscarUsuariosCadastrados() throws SQLException {
+        return authService.listarUsuariosCadastrados();
     }
 }

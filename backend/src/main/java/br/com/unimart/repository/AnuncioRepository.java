@@ -58,7 +58,7 @@ public class AnuncioRepository {
     }
 
     public int salvar(Anuncio anuncio) throws SQLException {
-        String sql = "INSERT INTO anuncios(titulo, descricao, categoria, modalidade, nome, turma, foto) VALUES(?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO anuncios(titulo, descricao, categoria, modalidade, nome, turma, foto, usuario_id) VALUES(?,?,?,?,?,?,?,?)";
 
         try (Connection c = DatabaseConfig.getConnection();
              PreparedStatement p = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -70,6 +70,11 @@ public class AnuncioRepository {
             p.setString(5, anuncio.getNomeAutor());
             p.setString(6, anuncio.getTurma());
             p.setString(7, anuncio.getFotoUrl());
+            if (anuncio.getUsuarioId() != null) {
+                p.setInt(8, anuncio.getUsuarioId());
+            } else {
+                p.setNull(8, java.sql.Types.INTEGER);
+            }
 
             int afetados = p.executeUpdate();
             if (afetados == 0) {
@@ -95,5 +100,43 @@ public class AnuncioRepository {
             p.setInt(2, id);
             p.executeUpdate();
         }
+    }
+
+    public List<Anuncio> buscarPorUsuario(int usuarioId, String nomeUsuario) throws SQLException {
+        List<Anuncio> lista = new ArrayList<>();
+        String sql = "SELECT * FROM anuncios " +
+                     "WHERE usuario_id = ? OR (usuario_id IS NULL AND lower(nome) = lower(?)) " +
+                     "ORDER BY id DESC";
+
+        try (Connection c = DatabaseConfig.getConnection();
+             PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, usuarioId);
+            p.setString(2, nomeUsuario != null ? nomeUsuario.trim() : "");
+
+            try (ResultSet r = p.executeQuery()) {
+                while (r.next()) {
+                    Anuncio a = montarAnuncio(r);
+                    int usuarioVinculado = r.getInt("usuario_id");
+                    a.setUsuarioId(r.wasNull() ? null : usuarioVinculado);
+                    lista.add(a);
+                }
+            }
+        }
+        return lista;
+    }
+
+    private Anuncio montarAnuncio(ResultSet r) throws SQLException {
+        return new Anuncio(
+                r.getInt("id"),
+                r.getString("titulo"),
+                r.getString("descricao"),
+                r.getString("categoria"),
+                r.getString("modalidade"),
+                r.getString("nome"),
+                r.getString("turma"),
+                r.getString("foto"),
+                r.getString("status"),
+                r.getString("criado_em")
+        );
     }
 }
