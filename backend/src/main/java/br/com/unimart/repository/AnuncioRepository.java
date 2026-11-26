@@ -30,7 +30,7 @@ public class AnuncioRepository {
     public List<Anuncio> buscarDisponiveis(String termoBusca, String categoria, String modalidade) throws SQLException {
         List<Anuncio> lista = new ArrayList<>();
 
-        String sql = "SELECT id, titulo, descricao, categoria, modalidade, nome, turma, foto, status, criado_em FROM anuncios " +
+        String sql = "SELECT id, titulo, descricao, categoria, modalidade, nome, turma, foto, status, criado_em, usuario_id FROM anuncios " +
                      "WHERE (? = '' OR lower(titulo || ' ' || descricao) LIKE ?) " +
                      "AND (? = '' OR categoria = ?) " +
                      "AND (? = '' OR modalidade = ?) " +
@@ -312,7 +312,7 @@ public class AnuncioRepository {
     }
 
     private Anuncio montarAnuncio(ResultSet r) throws SQLException {
-        return new Anuncio(
+        Anuncio anuncio = new Anuncio(
                 r.getInt("id"),
                 r.getString("titulo"),
                 r.getString("descricao"),
@@ -324,5 +324,8 @@ public class AnuncioRepository {
                 r.getString("status"),
                 r.getString("criado_em")
         );
+        int usuarioId = r.getInt("usuario_id");
+        anuncio.setUsuarioId(r.wasNull() ? null : usuarioId);
+        return anuncio;
     }
 }

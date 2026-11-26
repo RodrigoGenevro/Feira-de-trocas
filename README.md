@@ -21,7 +21,7 @@ item, search listings, and send a message of interest.
 
 ## Technology
 
-- Java 21
+- Java 25 (latest LTS)
 - Java Swing desktop interface
 - SQLite local database
 - Maven multi-module build (`backend/` and `frontend/`)
@@ -60,7 +60,7 @@ listing data to an external AI provider.
 
 ## Requirements
 
-- JDK 21
+- JDK 25
 - Maven 3.9 or newer
 
 ## Run locally

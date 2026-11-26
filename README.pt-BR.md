@@ -21,7 +21,7 @@ e mensagens de interesse em um só lugar.
 
 ## Tecnologias
 
-- Java 21
+- Java 25 (LTS mais recente)
 - Interface desktop com Java Swing
 - Banco de dados SQLite local
 - Build Maven com módulos (`backend/` e `frontend/`)
@@ -60,7 +60,7 @@ anúncios a um provedor externo de IA.
 
 ## Requisitos
 
-- JDK 21
+- JDK 25
 - Maven 3.9 ou superior
 
 ## Como executar

@@ -1,5 +1,6 @@
 package br.com.unimart.view.components;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -31,6 +32,20 @@ class AnuncioCardTest {
         });
 
         assertSame(anuncio, selecionado.get());
+    }
+
+    @Test
+    void proprioAnuncioNaoPermiteEnviarInteresse() throws Exception {
+        Anuncio anuncio = new Anuncio();
+
+        SwingUtilities.invokeAndWait(() -> {
+            AnuncioCard card = new AnuncioCard(anuncio, ignored -> {
+            }, false);
+            JButton botao = localizarBotao(card, "Seu anúncio");
+
+            assertNotNull(botao);
+            assertFalse(botao.isEnabled());
+        });
     }
 
     private JButton localizarBotao(Container container, String texto) {

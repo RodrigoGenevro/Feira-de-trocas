@@ -51,6 +51,17 @@ public class FeiraController {
         return this.usuarioLogado != null;
     }
 
+    public boolean anuncioPertenceAoUsuarioLogado(Anuncio anuncio) {
+        if (!isLogado() || anuncio == null) {
+            return false;
+        }
+        if (anuncio.getUsuarioId() != null) {
+            return usuarioLogado.getId().equals(anuncio.getUsuarioId());
+        }
+        return anuncio.getNomeAutor() != null
+                && usuarioLogado.getNome().equalsIgnoreCase(anuncio.getNomeAutor().trim());
+    }
+
     public Usuario getUsuarioLogado() {
         return this.usuarioLogado;
     }
@@ -81,10 +92,10 @@ public class FeiraController {
         return anuncioService.publicarAnuncio(novo);
     }
 
-    public void enviarInteresse(int anuncioId, String nomeInteressado, String mensagem) throws SQLException {
-        String interessadoFinal = isLogado() ? usuarioLogado.getNome() : nomeInteressado;
-        Interesse interesse = new Interesse(anuncioId, interessadoFinal, mensagem);
-        interesseService.registrarInteresse(interesse);
+    public void enviarInteresse(int anuncioId, String mensagem) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        Interesse interesse = new Interesse(anuncioId, usuario.getNome(), mensagem);
+        interesseService.registrarInteresse(interesse, usuario.getId(), usuario.getNome());
     }
 
     public List<Interesse> buscarInteressesDoAnuncio(int anuncioId) throws SQLException {

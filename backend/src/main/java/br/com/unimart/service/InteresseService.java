@@ -21,9 +21,12 @@ public class InteresseService {
         this.repository = repository;
     }
 
-    public void registrarInteresse(Interesse interesse) throws SQLException {
+    public void registrarInteresse(Interesse interesse, int usuarioId, String nomeUsuario) throws SQLException {
+        if (usuarioId <= 0 || nomeUsuario == null || nomeUsuario.isBlank()) {
+            throw new IllegalArgumentException("É necessário estar conectado para demonstrar interesse.");
+        }
         interesse.validar();
-        repository.salvar(interesse);
+        repository.salvar(interesse, usuarioId, nomeUsuario);
     }
 
     public List<Interesse> listarInteressesDoAnuncio(

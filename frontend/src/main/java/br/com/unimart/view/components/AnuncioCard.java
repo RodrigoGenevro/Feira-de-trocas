@@ -50,10 +50,16 @@ public class AnuncioCard extends JPanel {
 
     private final Anuncio anuncio;
     private final Consumer<Anuncio> onInteresseClick;
+    private final boolean permitirInteresse;
 
     public AnuncioCard(Anuncio anuncio, Consumer<Anuncio> onInteresseClick) {
+        this(anuncio, onInteresseClick, true);
+    }
+
+    public AnuncioCard(Anuncio anuncio, Consumer<Anuncio> onInteresseClick, boolean permitirInteresse) {
         this.anuncio = anuncio;
         this.onInteresseClick = onInteresseClick;
+        this.permitirInteresse = permitirInteresse;
         construirCard();
     }
 
@@ -120,10 +126,14 @@ public class AnuncioCard extends JPanel {
 
         // Botão com a mesma cor do botão principal
         JButton btnInteresse = Theme.createButton(
-                "Tenho interesse",
+                permitirInteresse ? "Tenho interesse" : "Seu anúncio",
                 Theme.GREEN,
                 Color.WHITE
         );
+        btnInteresse.setEnabled(permitirInteresse);
+        if (!permitirInteresse) {
+            btnInteresse.setToolTipText("Você não pode demonstrar interesse no próprio anúncio.");
+        }
 
         btnInteresse.setFont(new Font("SansSerif", Font.BOLD, 12));
         btnInteresse.setBorder(new EmptyBorder(8, 12, 8, 12));
