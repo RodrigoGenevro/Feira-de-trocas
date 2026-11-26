@@ -62,3 +62,19 @@ generated work, and decisions made after reviewing the output.
   value was made a card field after a compile error showed it was out of scope
   in the button-building method. The added tests were not run because local
   command execution was not approved.
+
+### 26/11/2026 — Trocaê pre-login screen
+
+- **Main prompt:** Create a pre-login screen inspired by the supplied reference,
+  use the application's existing colors, and rename the visible application to
+  “Trocaê.”
+- **What the AI generated:** Reworked the login and registration dialog into a
+  two-panel access screen with a welcome panel, green gradient, and the existing
+  login and account-creation flows. Updated visible application branding in the
+  main window and related dialogs.
+- **What the team kept:** The reference's split welcome-and-access composition,
+  adapted to the application's established green palette and Swing UI.
+- **What the team corrected or rejected, and why:** The supplied image was used
+  as visual direction only; the screen was implemented with native Swing
+  components and Java2D shapes rather than embedding the image. Tests were not
+  run for this change.

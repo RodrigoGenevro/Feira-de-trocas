@@ -66,3 +66,19 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
   indicar que a variável não estava no escopo do método que cria o botão. Os
   testes adicionados não foram executados porque a execução de comandos locais
   não foi autorizada.
+
+### 26/11/2026 — Tela de pré-login Trocaê
+
+- **Prompt principal:** Criar uma tela de pré-login inspirada na imagem de
+  referência enviada, usando as cores existentes da aplicação e alterando o
+  nome visível para “Trocaê”.
+- **O que a IA gerou:** Reformulou o diálogo de login e cadastro como uma tela
+  dividida em dois painéis, com área de boas-vindas, gradiente verde e
+  preservação dos fluxos existentes de login e criação de conta. Atualizou a
+  identidade visual exibida na janela principal e em diálogos relacionados.
+- **O que o time aproveitou:** A composição dividida entre boas-vindas e acesso,
+  adaptada à paleta verde já usada na aplicação e à interface Swing.
+- **O que o time corrigiu ou rejeitou, e por quê:** A imagem enviada serviu
+  apenas como referência visual; a tela foi implementada com componentes Swing e
+  formas Java2D, sem incorporar a imagem. Os testes não foram executados para
+  esta alteração.

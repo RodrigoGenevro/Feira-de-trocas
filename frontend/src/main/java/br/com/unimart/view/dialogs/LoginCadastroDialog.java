@@ -4,7 +4,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.SQLException;
@@ -62,13 +67,14 @@ public class LoginCadastroDialog extends JDialog {
     }
 
     public LoginCadastroDialog(JFrame parent, FeiraController controller, Runnable onAuthSuccess, Runnable onCancel) {
-        super(parent, "Acesso UniMart", true);
+        super(parent, "Trocaê | Acesse sua conta", true);
         this.controller = controller;
         this.onAuthSuccess = onAuthSuccess;
         this.onCancel = onCancel;
 
-        setSize(450, 620);
-        setResizable(false);
+        setSize(940, 620);
+        setMinimumSize(new Dimension(820, 560));
+        setResizable(true);
         setLocationRelativeTo(parent);
         getContentPane().setBackground(Color.WHITE);
         setLayout(new BorderLayout());
@@ -94,23 +100,12 @@ public class LoginCadastroDialog extends JDialog {
     }
 
     private void construirUI() {
-        JPanel header = new JPanel();
-        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
-        header.setBackground(Theme.INTRO_BG);
-        header.setBorder(new EmptyBorder(18, 24, 16, 24));
+        JPanel content = new JPanel(new BorderLayout());
+        content.setBackground(Color.WHITE);
 
-        JLabel title = new JLabel("\u267B Bem-vindo ao UniMart");
-        title.setFont(new Font("SansSerif", Font.BOLD, 20));
-        title.setForeground(Theme.DARK);
-
-        JLabel subtitle = new JLabel("Entre ou crie sua conta para acessar a feira.");
-        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        subtitle.setForeground(Theme.TEXT_MUTED);
-
-        header.add(title);
-        header.add(Box.createVerticalStrut(4));
-        header.add(subtitle);
-        add(header, BorderLayout.NORTH);
+        JPanel welcomePanel = criarPainelBoasVindas();
+        welcomePanel.setPreferredSize(new Dimension(390, 0));
+        content.add(welcomePanel, BorderLayout.WEST);
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(new Font("SansSerif", Font.BOLD, 13));
@@ -123,7 +118,95 @@ public class LoginCadastroDialog extends JDialog {
         cadastroScroll.getViewport().setBackground(Color.WHITE);
         tabs.addTab("Criar conta", cadastroScroll);
 
-        add(tabs, BorderLayout.CENTER);
+        JPanel accessPanel = new JPanel(new BorderLayout());
+        accessPanel.setBackground(Color.WHITE);
+        accessPanel.setBorder(new EmptyBorder(38, 38, 30, 38));
+
+        JPanel accessHeader = new JPanel();
+        accessHeader.setLayout(new BoxLayout(accessHeader, BoxLayout.Y_AXIS));
+        accessHeader.setBackground(Color.WHITE);
+        accessHeader.setBorder(new EmptyBorder(0, 0, 20, 0));
+
+        JLabel title = new JLabel("Acesse sua conta");
+        title.setFont(new Font("SansSerif", Font.BOLD, 25));
+        title.setForeground(Theme.DARK);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitle = new JLabel("Entre ou crie sua conta para continuar.");
+        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        subtitle.setForeground(Theme.TEXT_MUTED);
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        accessHeader.add(title);
+        accessHeader.add(Box.createVerticalStrut(7));
+        accessHeader.add(subtitle);
+
+        accessPanel.add(accessHeader, BorderLayout.NORTH);
+        accessPanel.add(tabs, BorderLayout.CENTER);
+        content.add(accessPanel, BorderLayout.CENTER);
+        add(content, BorderLayout.CENTER);
+    }
+
+    private JPanel criarPainelBoasVindas() {
+        JPanel panel = new JPanel(new BorderLayout(0, 0)) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                super.paintComponent(graphics);
+                Graphics2D graphics2D = (Graphics2D) graphics.create();
+                graphics2D.setRenderingHint(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON
+                );
+                graphics2D.setPaint(new GradientPaint(
+                        0, 0, Theme.DARK,
+                        getWidth(), getHeight(), Theme.GREEN
+                ));
+                graphics2D.fillRect(0, 0, getWidth(), getHeight());
+                graphics2D.setColor(new Color(255, 255, 255, 22));
+                graphics2D.fillOval(getWidth() - 150, -90, 260, 260);
+                graphics2D.fillOval(-130, getHeight() - 170, 300, 300);
+                graphics2D.dispose();
+            }
+        };
+        panel.setBorder(new EmptyBorder(42, 38, 36, 34));
+        panel.setOpaque(false);
+
+        JPanel brandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        brandPanel.setOpaque(false);
+        JLabel brand = new JLabel("\u267B Trocaê");
+        brand.setFont(new Font("SansSerif", Font.BOLD, 25));
+        brand.setForeground(Color.WHITE);
+        brandPanel.add(brand);
+        panel.add(brandPanel, BorderLayout.NORTH);
+
+        JPanel messagePanel = new JPanel();
+        messagePanel.setOpaque(false);
+        messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("<html>Bem-vindo<br>à Trocaê!</html>");
+        title.setFont(new Font("SansSerif", Font.BOLD, 34));
+        title.setForeground(Color.WHITE);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitle = new JLabel(
+                "<html>Encontre o que precisa, compartilhe o que não usa "
+                        + "e faça bons itens circularem pela comunidade.</html>"
+        );
+        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        subtitle.setForeground(Theme.INTRO_BG);
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        subtitle.setMaximumSize(new Dimension(310, 90));
+
+        messagePanel.add(title);
+        messagePanel.add(Box.createVerticalStrut(18));
+        messagePanel.add(subtitle);
+        panel.add(messagePanel, BorderLayout.CENTER);
+
+        JLabel footer = new JLabel("TROQUE  \u2022  DOE  \u2022  RECIRCULE");
+        footer.setFont(new Font("SansSerif", Font.BOLD, 11));
+        footer.setForeground(Theme.INTRO_BG);
+        panel.add(footer, BorderLayout.SOUTH);
+        return panel;
     }
 
     private JPanel criarPainelLogin() {
@@ -294,7 +377,7 @@ public class LoginCadastroDialog extends JDialog {
                     get();
                     autenticado = true;
                     JOptionPane.showMessageDialog(LoginCadastroDialog.this, "Conta criada com sucesso!",
-                            "UniMart", JOptionPane.INFORMATION_MESSAGE);
+                            "Trocaê", JOptionPane.INFORMATION_MESSAGE);
                     dispose();
                     if (onAuthSuccess != null) {
                         onAuthSuccess.run();

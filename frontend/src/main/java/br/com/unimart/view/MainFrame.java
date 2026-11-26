@@ -71,7 +71,7 @@ public class MainFrame extends JFrame {
     }
 
     private void configurarJanela() {
-        setTitle("UniMart | Feira de trocas");
+        setTitle("Trocaê | Feira de trocas");
         setSize(1180, 820);
         setMinimumSize(new Dimension(900, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -114,7 +114,7 @@ public class MainFrame extends JFrame {
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
         leftPanel.setBackground(Color.WHITE);
 
-        JLabel brand = new JLabel("\u267B UniMart");
+        JLabel brand = new JLabel("\u267B Trocaê");
         brand.setFont(new Font("SansSerif", Font.BOLD, 24));
         brand.setForeground(Theme.GREEN);
 

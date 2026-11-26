@@ -158,7 +158,7 @@ public class PerfilDialog extends JDialog {
                 try {
                     get();
                     JOptionPane.showMessageDialog(PerfilDialog.this, "Perfil atualizado com sucesso!",
-                            "UniMart", JOptionPane.INFORMATION_MESSAGE);
+                            "Trocaê", JOptionPane.INFORMATION_MESSAGE);
                     dispose();
                     if (onProfileUpdated != null) {
                         onProfileUpdated.run();

@@ -79,7 +79,7 @@ public class HistoricoAnunciosDialog extends JDialog {
         title.setFont(new Font("SansSerif", Font.BOLD, 26));
         title.setForeground(Theme.DARK);
 
-        JLabel subtitle = new JLabel("Acompanhe tudo que você publicou na comunidade UniMart.");
+        JLabel subtitle = new JLabel("Acompanhe tudo que você publicou na comunidade Trocaê.");
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
         subtitle.setForeground(Theme.TEXT_MUTED);
 
