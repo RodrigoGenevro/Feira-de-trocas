@@ -8,10 +8,11 @@ import org.junit.jupiter.api.Test;
 class AnuncioTest {
 
     @Test
-    void validarExigeLinkDeFotoHttpOuHttps() {
+    void validarPermiteFotoOpcionalEExigeLinkHttpOuHttpsQuandoInformado() {
         Anuncio anuncio = criarAnuncio("");
 
-        assertThrows(IllegalArgumentException.class, anuncio::validar);
+        assertDoesNotThrow(anuncio::validar);
+        assertDoesNotThrow(() -> criarAnuncio(null).validar());
         assertDoesNotThrow(() -> criarAnuncio("https://example.com/item.jpg").validar());
     }
 
