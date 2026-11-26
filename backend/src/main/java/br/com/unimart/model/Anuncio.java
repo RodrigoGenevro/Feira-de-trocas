@@ -8,6 +8,9 @@ import java.net.URI;
  */
 public class Anuncio extends EntidadeBase {
 
+    public static final int MAX_TITULO_LENGTH = 100;
+    public static final int MAX_DESCRICAO_LENGTH = 1000;
+    public static final int MAX_FOTO_URL_LENGTH = 2048;
     public static final String STATUS_DISPONIVEL = "DISPONIVEL";
     public static final String STATUS_RESERVADO = "RESERVADO";
     public static final String STATUS_CONCLUIDO = "CONCLUIDO";
@@ -125,21 +128,34 @@ public class Anuncio extends EntidadeBase {
         if (titulo == null || titulo.isBlank()) {
             throw new IllegalArgumentException("O título do item é obrigatório.");
         }
+        if (titulo.length() > MAX_TITULO_LENGTH) {
+            throw new IllegalArgumentException("O título deve ter no máximo "
+                    + MAX_TITULO_LENGTH + " caracteres.");
+        }
         if (descricao == null || descricao.isBlank()) {
             throw new IllegalArgumentException("A descrição do item é obrigatória.");
         }
-        validarFotoUrl();
+        if (descricao.length() > MAX_DESCRICAO_LENGTH) {
+            throw new IllegalArgumentException("A descrição deve ter no máximo "
+                    + MAX_DESCRICAO_LENGTH + " caracteres.");
+        }
+        validarUrlFoto(fotoUrl);
     }
 
-    private void validarFotoUrl() {
+    public static void validarUrlFoto(String fotoUrl) {
         if (fotoUrl == null || fotoUrl.isBlank()) {
             return;
+        }
+        if (fotoUrl.length() > MAX_FOTO_URL_LENGTH) {
+            throw new IllegalArgumentException("O link da foto deve ter no máximo "
+                    + MAX_FOTO_URL_LENGTH + " caracteres.");
         }
 
         try {
             URI uri = URI.create(fotoUrl);
             String esquema = uri.getScheme();
             if (uri.getHost() == null
+                    || uri.getUserInfo() != null
                     || (!"http".equalsIgnoreCase(esquema) && !"https".equalsIgnoreCase(esquema))) {
                 throw new IllegalArgumentException("Informe um link de foto válido (HTTP ou HTTPS).");
             }

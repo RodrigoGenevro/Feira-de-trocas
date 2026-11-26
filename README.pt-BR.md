@@ -32,6 +32,11 @@ e mensagens de interesse em um só lugar.
 - Publicação de anúncios com título, descrição, categoria, modalidade de
   troca/doação e link público opcional de foto HTTP(S)
 - Busca e filtros de anúncios disponíveis
+- Resultados paginados e ordenáveis, com controles acessíveis pelo teclado
+- Validação do formulário e prévia assíncrona da foto, com aviso quando ela não
+  puder ser carregada
+- Cabeçalho responsivo em duas linhas mantém visíveis as ações de conta e
+  publicação
 - Envio de mensagens de interesse em anúncios disponíveis
 - Controles do anunciante para ver interesses, aceitar um deles e reservar o
   anúncio, reabrir uma reserva ou concluir o anúncio
@@ -39,6 +44,8 @@ e mensagens de interesse em um só lugar.
 - Grade responsiva de anúncios, filtros acessíveis e chips removíveis para os
   filtros ativos
 - Backup e restauração do SQLite, com verificação de integridade antes da troca
+- Migrações versionadas do SQLite, verificações de integridade referencial e
+  índices para busca de anúncios
 
 O banco de dados é local à máquina. Use **Banco de dados** no cabeçalho para
 criar um snapshot consistente do SQLite ou restaurar um backup validado. O banco

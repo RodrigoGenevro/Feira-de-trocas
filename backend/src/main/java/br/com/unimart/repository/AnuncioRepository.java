@@ -1,15 +1,16 @@
 package br.com.unimart.repository;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.model.PaginaAnuncios;
 import br.com.unimart.util.DatabaseConfig;
 
 /**
@@ -28,36 +29,73 @@ public class AnuncioRepository {
     }
 
     public List<Anuncio> buscarDisponiveis(String termoBusca, String categoria, String modalidade) throws SQLException {
-        List<Anuncio> lista = new ArrayList<>();
+        return buscarPaginaDisponiveis(
+                termoBusca, categoria, modalidade, "RECENTES", Integer.MAX_VALUE, 0
+        ).anuncios();
+    }
 
-        String sql = "SELECT id, titulo, descricao, categoria, modalidade, nome, turma, foto, status, criado_em, usuario_id FROM anuncios " +
-                     "WHERE (? = '' OR lower(titulo || ' ' || descricao) LIKE ?) " +
-                     "AND (? = '' OR categoria = ?) " +
-                     "AND (? = '' OR modalidade = ?) " +
-                     "AND status = 'DISPONIVEL' " +
-                     "ORDER BY id DESC";
+    public PaginaAnuncios buscarPaginaDisponiveis(
+            String termoBusca, String categoria, String modalidade,
+            String ordenacao, int limite, int deslocamento
+    ) throws SQLException {
+        if (limite < 1 || deslocamento < 0) {
+            throw new IllegalArgumentException("Os parâmetros de paginação são inválidos.");
+        }
 
-        String q = termoBusca != null ? termoBusca.trim() : "";
-        String cat = categoria != null ? categoria.trim() : "";
-        String mod = modalidade != null ? modalidade.trim() : "";
+        String termo = termoBusca == null ? "" : termoBusca.trim().toLowerCase(Locale.ROOT);
+        String cat = categoria == null ? "" : categoria.trim();
+        String mod = modalidade == null ? "" : modalidade.trim();
+        List<String> valoresFiltro = new ArrayList<>();
+        StringBuilder where = new StringBuilder(" FROM anuncios WHERE status = 'DISPONIVEL'");
+        if (!termo.isEmpty()) {
+            where.append(" AND lower(titulo || ' ' || descricao) LIKE ?");
+            valoresFiltro.add("%" + termo + "%");
+        }
+        if (!cat.isEmpty()) {
+            where.append(" AND categoria = ?");
+            valoresFiltro.add(cat);
+        }
+        if (!mod.isEmpty()) {
+            where.append(" AND modalidade = ?");
+            valoresFiltro.add(mod);
+        }
+        String orderBy = switch (ordenacao == null ? "RECENTES" : ordenacao) {
+            case "TITULO_ASC" -> " ORDER BY titulo COLLATE NOCASE ASC, id DESC";
+            case "TITULO_DESC" -> " ORDER BY titulo COLLATE NOCASE DESC, id DESC";
+            default -> " ORDER BY id DESC";
+        };
+        List<Anuncio> anuncios = new ArrayList<>();
+        int total;
 
-        try (Connection c = abrirConexao();
-             PreparedStatement p = c.prepareStatement(sql)) {
-
-            p.setString(1, q);
-            p.setString(2, "%" + q.toLowerCase() + "%");
-            p.setString(3, cat);
-            p.setString(4, cat);
-            p.setString(5, mod);
-            p.setString(6, mod);
-
-            try (ResultSet r = p.executeQuery()) {
-                while (r.next()) {
-                    lista.add(montarAnuncio(r));
+        try (Connection connection = abrirConexao()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement count = connection.prepareStatement("SELECT COUNT(*)" + where)) {
+                    preencherFiltros(count, valoresFiltro);
+                    try (ResultSet result = count.executeQuery()) {
+                        total = result.next() ? result.getInt(1) : 0;
+                    }
                 }
+
+                String sql = "SELECT id, titulo, descricao, categoria, modalidade, nome, turma, foto, " +
+                             "status, criado_em, usuario_id" + where + orderBy + " LIMIT ? OFFSET ?";
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    preencherFiltros(statement, valoresFiltro);
+                    statement.setInt(valoresFiltro.size() + 1, limite);
+                    statement.setInt(valoresFiltro.size() + 2, deslocamento);
+                    try (ResultSet result = statement.executeQuery()) {
+                        while (result.next()) {
+                            anuncios.add(montarAnuncio(result));
+                        }
+                    }
+                }
+                connection.commit();
+            } catch (SQLException | RuntimeException e) {
+                rollback(connection, e);
+                throw e;
             }
         }
-        return lista;
+        return new PaginaAnuncios(anuncios, total);
     }
 
     public int salvar(Anuncio anuncio) throws SQLException {
@@ -334,7 +372,13 @@ public class AnuncioRepository {
     }
 
     private Connection abrirConexao() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl);
+        return DatabaseConfig.getConnection(jdbcUrl);
+    }
+
+    private void preencherFiltros(PreparedStatement statement, List<String> valoresFiltro) throws SQLException {
+        for (int i = 0; i < valoresFiltro.size(); i++) {
+            statement.setString(i + 1, valoresFiltro.get(i));
+        }
     }
 
     private Anuncio montarAnuncio(ResultSet r) throws SQLException {

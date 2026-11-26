@@ -32,6 +32,10 @@ item, search listings, and send a message of interest.
 - Listing creation with title, description, category, exchange/donation type,
   and an optional public HTTP(S) photo link
 - Search and filtering of available listings
+- Sortable, paginated listing results with keyboard-accessible controls
+- Listing form validation with an asynchronous image preview and clear failure
+  feedback
+- Responsive two-row header keeps account and publish actions visible
 - Interest messages for available listings
 - Owner controls to review interests, accept one to reserve the listing, reopen
   a reservation, or complete the listing
@@ -39,6 +43,8 @@ item, search listings, and send a message of interest.
 - Responsive listing grid with accessible active filters and removable filter
   chips
 - SQLite database backup and restore, with integrity checks before replacement
+- Versioned SQLite migrations, referential integrity checks, and listing-search
+  indexes
 
 The database is local to the machine. Use **Banco de dados** in the application
 header to create a consistent SQLite snapshot or restore a validated backup.

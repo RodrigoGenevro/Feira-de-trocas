@@ -23,6 +23,22 @@ class AnuncioTest {
         assertThrows(IllegalArgumentException.class, anuncio::validar);
     }
 
+    @Test
+    void validarRejeitaCamposAcimaDosLimitesEUrlComCredenciais() {
+        Anuncio anuncioComTituloLongo = criarAnuncio("");
+        anuncioComTituloLongo.setTitulo("x".repeat(Anuncio.MAX_TITULO_LENGTH + 1));
+        assertThrows(IllegalArgumentException.class, anuncioComTituloLongo::validar);
+
+        Anuncio anuncioComDescricaoLonga = criarAnuncio("");
+        anuncioComDescricaoLonga.setDescricao("x".repeat(Anuncio.MAX_DESCRICAO_LENGTH + 1));
+        assertThrows(IllegalArgumentException.class, anuncioComDescricaoLonga::validar);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> Anuncio.validarUrlFoto("https://user:pass@example.com/item.jpg")
+        );
+    }
+
     private Anuncio criarAnuncio(String fotoUrl) {
         Anuncio anuncio = new Anuncio();
         anuncio.setNomeAutor("Pessoa anunciante");

@@ -5,6 +5,7 @@ import java.util.List;
 
 import br.com.unimart.model.Anuncio;
 import br.com.unimart.model.Interesse;
+import br.com.unimart.model.PaginaAnuncios;
 import br.com.unimart.model.Usuario;
 import br.com.unimart.service.AnuncioService;
 import br.com.unimart.service.AuthService;
@@ -68,6 +69,15 @@ public class FeiraController {
 
     public List<Anuncio> buscarAnuncios(String termoBusca, String categoria, String modalidade) throws SQLException {
         return anuncioService.listarAnuncios(termoBusca, categoria, modalidade);
+    }
+
+    public PaginaAnuncios buscarPaginaAnuncios(
+            String termoBusca, String categoria, String modalidade,
+            String ordenacao, int pagina, int tamanhoPagina
+    ) throws SQLException {
+        return anuncioService.listarPaginaAnuncios(
+                termoBusca, categoria, modalidade, ordenacao, pagina, tamanhoPagina
+        );
     }
 
     public Anuncio criarAnuncio(String nomeAutor, String turma, String titulo, String descricao,
