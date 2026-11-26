@@ -30,7 +30,7 @@ item, search listings, and send a message of interest.
 
 - Account registration, login, and profile editing
 - Listing creation with title, description, category, exchange/donation type,
-  and a required public HTTP(S) photo link
+  and an optional public HTTP(S) photo link
 - Search and filtering of available listings
 - Interest messages for available listings
 - Owner controls to review interests, accept one to reserve the listing, reopen

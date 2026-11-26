@@ -133,7 +133,7 @@ public class Anuncio extends EntidadeBase {
 
     private void validarFotoUrl() {
         if (fotoUrl == null || fotoUrl.isBlank()) {
-            throw new IllegalArgumentException("O link da foto é obrigatório.");
+            return;
         }
 
         try {

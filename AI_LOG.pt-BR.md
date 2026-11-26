@@ -38,11 +38,11 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
 - **Prompt principal:** Comparar a aplicação com as regras e o briefing do
   projeto e implementar as lacunas identificadas sem alterar desnecessariamente
   a aparência existente.
-- **O que a IA gerou:** Alterações de código e documentação para exigir links de
-  foto, permitir a gestão de interesses e status pelo anunciante, e adicionar
-  testes, lint e CI.
+- **O que a IA gerou:** Alterações de código e documentação que inicialmente
+  exigiam links de foto, adicionavam a gestão de interesses e status pelo
+  anunciante e incluíam testes, lint e CI.
 - **O que o time aproveitou:** O anunciante pode revisar interesses recebidos,
   aceitar um para reservar o anúncio, reabrir uma reserva ou concluir o anúncio.
-- **O que o time corrigiu ou rejeitou, e por quê:** A geração de descrição por IA
-  foi adiada pelo time. Nenhum conteúdo de anúncio é enviado a um provedor
-  externo de IA.
+- **O que o time corrigiu ou rejeitou, e por quê:** A exigência de foto foi
+  revertida porque a foto deve ser opcional. A geração de descrição por IA também
+  foi adiada; nenhum conteúdo de anúncio é enviado a um provedor externo de IA.

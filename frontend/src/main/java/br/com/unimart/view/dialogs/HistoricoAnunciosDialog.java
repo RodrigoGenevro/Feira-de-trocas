@@ -314,7 +314,14 @@ public class HistoricoAnunciosDialog extends JDialog {
     }
 
     private void atualizarStatusAnuncio(Anuncio anuncio, boolean reabrir) {
-        String acao = reabrir ? "reabrir" : "encerrar";
+        String acao;
+        if (reabrir) {
+            acao = "reabrir";
+        } else if (Anuncio.STATUS_RESERVADO.equalsIgnoreCase(anuncio.getStatus())) {
+            acao = "concluir";
+        } else {
+            acao = "encerrar";
+        }
         int resposta = JOptionPane.showConfirmDialog(
                 this,
                 "Deseja " + acao + " o anúncio \"" + anuncio.getTitulo() + "\"?",

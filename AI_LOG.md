@@ -37,10 +37,11 @@ generated work, and decisions made after reviewing the output.
 - **Main prompt:** Compare the application with the project rules and briefing,
   then implement the identified gaps without changing the existing appearance
   unnecessarily.
-- **What the AI generated:** Code and documentation updates for required photo
-  links, owner-managed interest and listing statuses, tests, lint, and CI.
+- **What the AI generated:** Code and documentation updates that initially
+  required photo links, added owner-managed interest and listing statuses, and
+  added tests, lint, and CI.
 - **What the team kept:** The owner can review incoming interests, accept one to
   reserve a listing, reopen a reservation, or complete a listing.
-- **What the team corrected or rejected, and why:** AI-powered description
-  generation was deferred by the team. No listing content is sent to an
-  external AI provider.
+- **What the team corrected or rejected, and why:** The photo requirement was
+  reverted because photos should be optional. AI-powered description generation
+  was also deferred; no listing content is sent to an external AI provider.

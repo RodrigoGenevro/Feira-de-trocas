@@ -30,7 +30,7 @@ e mensagens de interesse em um só lugar.
 
 - Cadastro, login e edição de perfil
 - Publicação de anúncios com título, descrição, categoria, modalidade de
-  troca/doação e link público obrigatório de foto HTTP(S)
+  troca/doação e link público opcional de foto HTTP(S)
 - Busca e filtros de anúncios disponíveis
 - Envio de mensagens de interesse em anúncios disponíveis
 - Controles do anunciante para ver interesses, aceitar um deles e reservar o
