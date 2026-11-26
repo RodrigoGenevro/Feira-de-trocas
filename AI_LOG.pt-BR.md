@@ -111,3 +111,16 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
 - **O que o time corrigiu ou rejeitou, e por quê:** A edição foi limitada a
   anúncios disponíveis para não alterar reservas em andamento nem o histórico
   de anúncios concluídos. Foram adicionados testes direcionados ao repositório.
+### 26/11/2026 — Correção da cor do botão “Seu anúncio”
+
+- **Prompt principal:** Quando o anúncio é meu, a cor do botão fica estranha;
+  deixar ela da mesma cor dos outros botões.
+- **O que a IA gerou:** Em `AnuncioCard.java`, o botão desabilitado do próprio
+  anúncio passou a usar um `BasicButtonUI` customizado que pinta o texto sempre
+  em branco e mantém o fundo verde `Theme.GREEN`, ignorando o efeito de
+  escurecimento que o Swing aplica a botões desabilitados.
+- **O que o time aproveitou:** O botão “Seu anúncio” agora tem exatamente a
+  mesma aparência dos outros botões, mantendo-se não clicável e com o tooltip
+  explicativo.
+- **O que o time corrigiu ou rejeitou, e por quê:** Nada; a compilação com
+  `javac` (incluindo os models do backend) passou sem erros.

@@ -6,6 +6,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.Image;
 import java.io.IOException;
 import java.net.URI;
@@ -18,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.Box;
+import javax.swing.JComponent;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -150,6 +154,19 @@ public class AnuncioCard extends JPanel {
             btnInteresse.setToolTipText("Você não pode demonstrar interesse no próprio anúncio.");
         } else {
             btnInteresse.setToolTipText("Demonstrar interesse neste anúncio");
+            // Mantém a mesma aparência dos outros botões mesmo desabilitado
+            btnInteresse.setDisabledIcon(null);
+            btnInteresse.setForeground(Color.WHITE);
+            btnInteresse.setBackground(Theme.GREEN);
+            btnInteresse.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
+                @Override
+                protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
+                    FontMetrics fm = g.getFontMetrics();
+                    g.setColor(Color.WHITE);
+                    g.setFont(c.getFont());
+                    g.drawString(text, textRect.x, textRect.y + fm.getAscent());
+                }
+            });
         }
 
         btnInteresse.setFont(new Font("SansSerif", Font.BOLD, 12));
