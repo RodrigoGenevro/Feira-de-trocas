@@ -12,6 +12,13 @@ Este arquivo registra as decisões refletidas na implementação atual.
 - **Motivo:** A equipe já trabalha principalmente com Java, e uma aplicação
   desktop é adequada ao MVP de uma semana.
 
+## 26/11/2026 — Atualização para a versão LTS mais recente do Java
+
+- **Decisão:** Atualizar o runtime e o alvo de build do projeto para Java 25,
+  mantendo Swing e Maven.
+- **Motivo:** Java 25 é a versão LTS mais recente; o alvo do compilador Maven,
+  o runtime do CI e os requisitos documentados agora usam essa versão.
+
 ## 24/11/2026 — Separação dos módulos frontend e backend
 
 - **Decisão:** Manter a interface Swing em `frontend/` e os modelos, serviços,

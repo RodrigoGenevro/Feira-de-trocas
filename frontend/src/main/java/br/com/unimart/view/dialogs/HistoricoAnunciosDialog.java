@@ -32,12 +32,16 @@ import br.com.unimart.util.Theme;
 public class HistoricoAnunciosDialog extends JDialog {
 
     private final FeiraController controller;
+    private final Runnable onAnuncioAtualizado;
     private JPanel resumoPanel;
     private JPanel anunciosPanel;
 
-    public HistoricoAnunciosDialog(JFrame parent, FeiraController controller) {
+    public HistoricoAnunciosDialog(
+            JFrame parent, FeiraController controller, Runnable onAnuncioAtualizado
+    ) {
         super(parent, "Meu histórico de anúncios", true);
         this.controller = controller;
+        this.onAnuncioAtualizado = onAnuncioAtualizado;
 
         setSize(900, 620);
         setResizable(true);
@@ -277,7 +281,10 @@ public class HistoricoAnunciosDialog extends JDialog {
         interessesBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         interessesBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         interessesBtn.addActionListener(e ->
-                new InteressesAnuncioDialog(this, controller, anuncio, this::carregarHistorico).setVisible(true)
+                new InteressesAnuncioDialog(this, controller, anuncio, () -> {
+                    carregarHistorico();
+                    notificarAnuncioAtualizado();
+                }).setVisible(true)
         );
         right.add(Box.createVerticalStrut(5));
         right.add(interessesBtn);
@@ -349,6 +356,7 @@ public class HistoricoAnunciosDialog extends JDialog {
                 try {
                     get();
                     carregarHistorico();
+                    notificarAnuncioAtualizado();
                 } catch (java.util.concurrent.ExecutionException e) {
                     Throwable causa = e.getCause() != null ? e.getCause() : e;
                     JOptionPane.showMessageDialog(
@@ -362,6 +370,12 @@ public class HistoricoAnunciosDialog extends JDialog {
                 }
             }
         }.execute();
+    }
+
+    private void notificarAnuncioAtualizado() {
+        if (onAnuncioAtualizado != null) {
+            onAnuncioAtualizado.run();
+        }
     }
 
     private JPanel criarEstadoVazio() {

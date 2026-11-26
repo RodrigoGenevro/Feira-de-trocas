@@ -43,6 +43,7 @@ public class Main {
                     controller,
                     () -> {
                         mainFrame.atualizarHeaderAuth();
+                        mainFrame.atualizarGrid();
                         mainFrame.setVisible(true);
                     },
                     () -> System.exit(0)

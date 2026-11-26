@@ -113,17 +113,32 @@ class AnuncioRepositoryTest {
         inserirAnuncio(1, "Livro", 10, "Ana", "DISPONIVEL");
         inserirAnuncio(2, "Caderno", 10, "Ana", "RESERVADO");
 
-        interesseRepository.salvar(new Interesse(1, "Bia", "Tenho interesse."));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> interesseRepository.salvar(new Interesse(1, "Ana", "Tenho interesse."), 10, "Ana")
+        );
+        interesseRepository.salvar(new Interesse(1, "Bia", "Tenho interesse."), 20, "Bia");
         assertEquals(1, contarInteresses(1));
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> interesseRepository.salvar(new Interesse(2, "Caio", "Tenho interesse."))
+                () -> interesseRepository.salvar(new Interesse(2, "Caio", "Tenho interesse."), 20, "Caio")
         );
         assertEquals(0, contarInteresses(2));
     }
 
-    private void inserirAnuncio(int id, String titulo, int usuarioId, String nome, String status)
+    @Test
+    void anuncioSemUsuarioVinculadoBloqueiaInteresseDoMesmoNome() throws SQLException {
+        inserirAnuncio(1, "Livro", null, "Ana", "DISPONIVEL");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> interesseRepository.salvar(new Interesse(1, "Ana", "Tenho interesse."), 20, "Ana")
+        );
+        assertEquals(0, contarInteresses(1));
+    }
+
+    private void inserirAnuncio(int id, String titulo, Integer usuarioId, String nome, String status)
             throws SQLException {
         try (Connection connection = DriverManager.getConnection(jdbcUrl);
              PreparedStatement statement = connection.prepareStatement(
@@ -132,7 +147,11 @@ class AnuncioRepositoryTest {
             statement.setInt(1, id);
             statement.setString(2, titulo);
             statement.setString(3, nome);
-            statement.setInt(4, usuarioId);
+            if (usuarioId == null) {
+                statement.setNull(4, java.sql.Types.INTEGER);
+            } else {
+                statement.setInt(4, usuarioId);
+            }
             statement.setString(5, status);
             statement.executeUpdate();
         }

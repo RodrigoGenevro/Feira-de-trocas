@@ -26,10 +26,12 @@ public class InteresseRepository {
         this.jdbcUrl = jdbcUrl;
     }
 
-    public void salvar(Interesse interesse) throws SQLException {
+    public void salvar(Interesse interesse, int usuarioId, String nomeUsuario) throws SQLException {
         String sql = "INSERT INTO interesses(anuncio_id, nome, mensagem) " +
                      "SELECT ?, ?, ? WHERE EXISTS (" +
-                     "SELECT 1 FROM anuncios WHERE id = ? AND status = 'DISPONIVEL')";
+                     "SELECT 1 FROM anuncios WHERE id = ? AND status = 'DISPONIVEL' " +
+                     "AND NOT ((usuario_id IS NOT NULL AND usuario_id = ?) " +
+                     "OR (usuario_id IS NULL AND lower(nome) = lower(?))))";
         try (Connection c = abrirConexao();
              PreparedStatement p = c.prepareStatement(sql)) {
 
@@ -37,8 +39,12 @@ public class InteresseRepository {
             p.setString(2, interesse.getNomeInteressado());
             p.setString(3, interesse.getMensagem());
             p.setInt(4, interesse.getAnuncioId());
+            p.setInt(5, usuarioId);
+            p.setString(6, nomeUsuario.trim());
             if (p.executeUpdate() != 1) {
-                throw new IllegalArgumentException("Este anúncio não está mais disponível para interesse.");
+                throw new IllegalArgumentException(
+                        "Este anúncio não está disponível para interesse ou pertence a você."
+                );
             }
         }
     }

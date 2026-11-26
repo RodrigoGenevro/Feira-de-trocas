@@ -74,13 +74,12 @@ public class InteresseDialog extends BaseDialog {
         enviarBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         enviarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         enviarBtn.addActionListener(e -> {
-            String nome = nomeField.getText();
             String mensagem = msgArea.getText();
 
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    controller.enviarInteresse(anuncio.getId(), nome, mensagem);
+                    controller.enviarInteresse(anuncio.getId(), mensagem);
                     return null;
                 }
 

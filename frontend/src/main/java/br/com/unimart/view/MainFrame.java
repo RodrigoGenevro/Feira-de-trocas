@@ -140,17 +140,23 @@ public class MainFrame extends JFrame {
             JButton perfilBtn = Theme.createButton("Meu perfil", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
             perfilBtn.addActionListener(e -> new PerfilDialog(this, controller, this::atualizarHeaderAuth).setVisible(true));
 
-            JButton historicoBtn = Theme.createButton("Meu histórico", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
-            historicoBtn.addActionListener(e -> new HistoricoAnunciosDialog(this, controller).setVisible(true));
+            JButton historicoBtn = Theme.createButton("Meus anúncios", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+            historicoBtn.addActionListener(e ->
+                    new HistoricoAnunciosDialog(this, controller, this::atualizarGrid).setVisible(true)
+            );
 
             JButton sairBtn = Theme.createButton("Sair", new Color(0xF6, 0xF7, 0xF7), Theme.TEXT_MUTED);
             sairBtn.addActionListener(e -> {
                 controller.logout();
-                atualizarHeaderAuth();
+                setVisible(false);
                 new LoginCadastroDialog(
-                        this,
+                        null,
                         controller,
-                        this::atualizarHeaderAuth,
+                        () -> {
+                            atualizarHeaderAuth();
+                            atualizarGrid();
+                            setVisible(true);
+                        },
                         () -> System.exit(0)
                 ).setVisible(true);
             });
@@ -185,6 +191,7 @@ public class MainFrame extends JFrame {
     private void abrirLoginECarregar(Runnable acaoPosLogin) {
         new LoginCadastroDialog(this, controller, () -> {
             atualizarHeaderAuth();
+            atualizarGrid();
             if (acaoPosLogin != null) {
                 acaoPosLogin.run();
             }
@@ -376,11 +383,16 @@ public class MainFrame extends JFrame {
     }
 
     private AnuncioCard criarCartaoAnuncio(Anuncio anuncio) {
-        return new AnuncioCard(anuncio, anuncioSelecionado ->
-                executarAcaoAutenticada(() ->
-                        new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true)
-                )
-        );
+        return new AnuncioCard(anuncio, anuncioSelecionado -> executarAcaoAutenticada(() -> {
+            if (controller.anuncioPertenceAoUsuarioLogado(anuncioSelecionado)) {
+                JOptionPane.showMessageDialog(this,
+                        "Você não pode demonstrar interesse no próprio anúncio.",
+                        "Atenção", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true);
+        }),
+                !controller.anuncioPertenceAoUsuarioLogado(anuncio));
     }
 
     private void exibirErroCarregamento(Throwable erro) {

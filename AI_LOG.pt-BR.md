@@ -46,3 +46,23 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
 - **O que o time corrigiu ou rejeitou, e por quê:** A exigência de foto foi
   revertida porque a foto deve ser opcional. A geração de descrição por IA também
   foi adiada; nenhum conteúdo de anúncio é enviado a um provedor externo de IA.
+
+### 26/11/2026 — Atualização para Java LTS e ajustes no fluxo de anúncios
+
+- **Prompt principal:** Atualizar o runtime Java para a versão LTS mais recente
+  e aprimorar o comportamento de propriedade dos anúncios, saída da conta e
+  atualização de status.
+- **O que a IA gerou:** Atualizou o alvo do compilador Maven, a versão do Java
+  no CI e os requisitos em português e inglês para Java 25. Alterou o botão de
+  histórico para “Meus anúncios”, bloqueou o envio de interesse nos próprios
+  anúncios na interface e no banco, ocultou a janela principal enquanto o login
+  de saída é exibido e atualizou os anúncios disponíveis após reserva,
+  conclusão ou reabertura. Também adicionou testes focados na restrição de
+  interesse do anunciante.
+- **O que o time aproveitou:** Java 25 como alvo do projeto e os comportamentos
+  solicitados para anúncios e saída da conta.
+- **O que o time corrigiu ou rejeitou, e por quê:** O valor
+  `permitirInteresse` passou a ser um campo do card após um erro de compilação
+  indicar que a variável não estava no escopo do método que cria o botão. Os
+  testes adicionados não foram executados porque a execução de comandos locais
+  não foi autorizada.

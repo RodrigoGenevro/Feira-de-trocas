@@ -12,6 +12,13 @@ This file records the decisions reflected in the current implementation.
 - **Rationale:** The team already works primarily with Java, and a desktop
   application fits the one-week MVP timeframe.
 
+## 26/11/2026 — Upgrade to the latest Java LTS
+
+- **Decision:** Upgrade the project runtime and build target to Java 25 while
+  retaining Swing and Maven.
+- **Rationale:** Java 25 is the latest LTS release; the Maven compiler target,
+  CI runtime, and documented requirements now use this version.
+
 ## 24/11/2026 — Separate frontend and backend modules
 
 - **Decision:** Keep the Swing UI in `frontend/` and domain, service, controller,
