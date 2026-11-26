@@ -62,3 +62,16 @@ generated work, and decisions made after reviewing the output.
   value was made a card field after a compile error showed it was out of scope
   in the button-building method. The added tests were not run because local
   command execution was not approved.
+
+### 26/11/2026 — Fixing the “Seu anúncio” button color
+
+- **Main prompt:** When the listing is mine, the button color looks odd; make it
+  the same color as the other buttons.
+- **What the AI generated:** In `AnuncioCard.java`, the disabled own-listing
+  button now uses a custom `BasicButtonUI` that always paints the text in white
+  and keeps the `Theme.GREEN` background, ignoring the darkening effect Swing
+  applies to disabled buttons.
+- **What the team kept:** The “Seu anúncio” button now looks exactly like the
+  other buttons while remaining non-clickable and keeping its tooltip.
+- **What the team corrected or rejected, and why:** Nothing; compiling with
+  `javac` (including the backend models) passed without errors.
