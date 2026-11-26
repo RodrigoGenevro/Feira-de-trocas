@@ -26,7 +26,12 @@ public class InteresseService {
         repository.salvar(interesse);
     }
 
-    public List<Interesse> listarInteresses() throws SQLException {
-        return repository.listarTodos();
+    public List<Interesse> listarInteressesDoAnuncio(
+            int anuncioId, int usuarioId, String nomeUsuario
+    ) throws SQLException {
+        if (anuncioId <= 0 || usuarioId <= 0 || nomeUsuario == null || nomeUsuario.isBlank()) {
+            throw new IllegalArgumentException("É necessário estar conectado como anunciante.");
+        }
+        return repository.listarPorAnuncio(anuncioId, usuarioId, nomeUsuario);
     }
 }
