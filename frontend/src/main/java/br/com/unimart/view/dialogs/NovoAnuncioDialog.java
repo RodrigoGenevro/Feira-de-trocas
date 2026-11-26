@@ -15,9 +15,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
 import javax.swing.border.LineBorder;
 
 import br.com.unimart.controller.FeiraController;
+import br.com.unimart.model.Anuncio;
 import br.com.unimart.model.Usuario;
 import br.com.unimart.util.Theme;
 
@@ -121,25 +123,41 @@ public class NovoAnuncioDialog extends BaseDialog {
         submitBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         submitBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         submitBtn.addActionListener(e -> {
-            try {
-                controller.criarAnuncio(
-                        nomeField.getText(),
-                        turmaField.getText(),
-                        tituloField.getText(),
-                        descArea.getText(),
-                        (String) catBox.getSelectedItem(),
-                        (String) modBox.getSelectedItem(),
-                        fotoField.getText()
-                );
-                dispose();
-                if (onSuccessCallback != null) {
-                    onSuccessCallback.run();
+            String nome = nomeField.getText();
+            String turma = turmaField.getText();
+            String titulo = tituloField.getText();
+            String descricao = descArea.getText();
+            String categoria = (String) catBox.getSelectedItem();
+            String modalidade = (String) modBox.getSelectedItem();
+            String foto = fotoField.getText();
+
+            new SwingWorker<Anuncio, Void>() {
+                @Override
+                protected Anuncio doInBackground() throws Exception {
+                    return controller.criarAnuncio(nome, turma, titulo, descricao,
+                            categoria, modalidade, foto);
                 }
-            } catch (IllegalArgumentException ex) {
-                showWarning(ex.getMessage());
-            } catch (Exception ex) {
-                showError("Não foi possível publicar o anúncio: " + ex.getMessage());
-            }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        dispose();
+                        if (onSuccessCallback != null) {
+                            onSuccessCallback.run();
+                        }
+                    } catch (java.util.concurrent.ExecutionException ex) {
+                        Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+                        if (causa instanceof IllegalArgumentException) {
+                            showWarning(causa.getMessage());
+                        } else {
+                            showError("Não foi possível publicar o anúncio: " + causa.getMessage());
+                        }
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }.execute();
         });
 
         formPanel.add(submitBtn);

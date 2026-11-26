@@ -26,6 +26,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -52,9 +54,12 @@ public class MainFrame extends JFrame {
     private JLabel contadorLabel;
     private JPanel gridPanel;
     private JPanel authActionsPanel;
+    private final Timer buscaTimer = new Timer(300, e -> atualizarGrid());
+    private SwingWorker<List<Anuncio>, Void> gridWorker;
 
     public MainFrame(FeiraController controller) {
         this.controller = controller;
+        buscaTimer.setRepeats(false);
         configurarJanela();
         construirLayout();
         atualizarHeaderAuth();
@@ -234,7 +239,7 @@ public class MainFrame extends JFrame {
         buscaField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                atualizarGrid();
+                agendarAtualizacaoGrid();
             }
         });
 
@@ -247,7 +252,7 @@ public class MainFrame extends JFrame {
                 "Outros"
         });
         Theme.styleComboBox(categoriaCombo);
-        categoriaCombo.addActionListener(e -> atualizarGrid());
+        categoriaCombo.addActionListener(e -> agendarAtualizacaoGrid());
 
         modalidadeCombo = new JComboBox<>(new String[]{
                 "Trocas e doações",
@@ -255,7 +260,7 @@ public class MainFrame extends JFrame {
                 "Doação"
         });
         Theme.styleComboBox(modalidadeCombo);
-        modalidadeCombo.addActionListener(e -> atualizarGrid());
+        modalidadeCombo.addActionListener(e -> agendarAtualizacaoGrid());
 
         gbc.gridx = 0;
         gbc.weightx = 1.0;
@@ -302,40 +307,64 @@ public class MainFrame extends JFrame {
     }
 
     public void atualizarGrid() {
-        gridPanel.removeAll();
-
-        try {
-            List<Anuncio> itens = controller.buscarAnuncios(
-                    buscaField.getText(),
-                    (String) categoriaCombo.getSelectedItem(),
-                    (String) modalidadeCombo.getSelectedItem()
-            );
-
-            contadorLabel.setText(itens.size() + (itens.size() == 1 ? " item" : " itens"));
-
-            if (itens.isEmpty()) {
-                gridPanel.setLayout(new BorderLayout());
-                JLabel empty = new JLabel("Nenhum anúncio encontrado. Tente mudar os filtros ou publique o primeiro!", JLabel.CENTER);
-                empty.setFont(new Font("SansSerif", Font.PLAIN, 15));
-                empty.setForeground(Theme.TEXT_MUTED);
-                empty.setBorder(new EmptyBorder(50, 20, 50, 20));
-                gridPanel.add(empty, BorderLayout.CENTER);
-            } else {
-                gridPanel.setLayout(new GridLayout(0, 3, 18, 18));
-                for (Anuncio item : itens) {
-                    gridPanel.add(new AnuncioCard(item, anuncioSelecionado ->
-                            executarAcaoAutenticada(() ->
-                                    new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true)
-                            )
-                    ));
-                }
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar anúncios: " + e.getMessage(),
-                    "Erro", JOptionPane.ERROR_MESSAGE);
+        buscaTimer.stop();
+        if (gridWorker != null) {
+            gridWorker.cancel(true);
         }
 
-        gridPanel.revalidate();
-        gridPanel.repaint();
+        String termoBusca = buscaField.getText();
+        String categoria = (String) categoriaCombo.getSelectedItem();
+        String modalidade = (String) modalidadeCombo.getSelectedItem();
+
+        gridWorker = new SwingWorker<List<Anuncio>, Void>() {
+            @Override
+            protected List<Anuncio> doInBackground() throws SQLException {
+                return controller.buscarAnuncios(termoBusca, categoria, modalidade);
+            }
+
+            @Override
+            protected void done() {
+                if (isCancelled()) {
+                    return;
+                }
+
+                try {
+                    List<Anuncio> itens = get();
+                    gridPanel.removeAll();
+                    contadorLabel.setText(itens.size() + (itens.size() == 1 ? " item" : " itens"));
+
+                    if (itens.isEmpty()) {
+                        gridPanel.setLayout(new BorderLayout());
+                        JLabel empty = new JLabel("Nenhum anúncio encontrado. Tente mudar os filtros ou publique o primeiro!", JLabel.CENTER);
+                        empty.setFont(new Font("SansSerif", Font.PLAIN, 15));
+                        empty.setForeground(Theme.TEXT_MUTED);
+                        empty.setBorder(new EmptyBorder(50, 20, 50, 20));
+                        gridPanel.add(empty, BorderLayout.CENTER);
+                    } else {
+                        gridPanel.setLayout(new GridLayout(0, 3, 18, 18));
+                        for (Anuncio item : itens) {
+                            gridPanel.add(new AnuncioCard(item, anuncioSelecionado ->
+                                    executarAcaoAutenticada(() ->
+                                            new InteresseDialog(MainFrame.this, controller, anuncioSelecionado).setVisible(true)
+                                    )
+                            ));
+                        }
+                    }
+
+                    gridPanel.revalidate();
+                    gridPanel.repaint();
+                } catch (Exception e) {
+                    Throwable causa = e.getCause() != null ? e.getCause() : e;
+                    JOptionPane.showMessageDialog(MainFrame.this,
+                            "Erro ao carregar anúncios: " + causa.getMessage(),
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        gridWorker.execute();
+    }
+
+    private void agendarAtualizacaoGrid() {
+        buscaTimer.restart();
     }
 }

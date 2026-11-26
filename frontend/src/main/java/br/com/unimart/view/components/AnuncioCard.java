@@ -10,6 +10,8 @@ import java.awt.Image;
 import java.net.URI;
 import java.net.URL;
 import java.util.function.Consumer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -29,6 +31,15 @@ import br.com.unimart.util.Theme;
  * Componente visual encapsulado que representa um card de Anuncio na grade.
  */
 public class AnuncioCard extends JPanel {
+
+    private static final int CACHE_SIZE = 64;
+    private static final Map<String, ImageIcon> IMAGE_CACHE =
+            new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, ImageIcon> eldest) {
+                    return size() > CACHE_SIZE;
+                }
+            };
 
     private final Anuncio anuncio;
     private final Consumer<Anuncio> onInteresseClick;
@@ -132,6 +143,15 @@ public class AnuncioCard extends JPanel {
     }
 
     private void carregarImagemAssincrona(String urlStr, JLabel targetLabel) {
+        synchronized (IMAGE_CACHE) {
+            ImageIcon cached = IMAGE_CACHE.get(urlStr);
+            if (cached != null) {
+                targetLabel.setText("");
+                targetLabel.setIcon(cached);
+                return;
+            }
+        }
+
         new SwingWorker<ImageIcon, Void>() {
 
             @Override
@@ -162,6 +182,9 @@ public class AnuncioCard extends JPanel {
                     ImageIcon icon = get();
 
                     if (icon != null) {
+                        synchronized (IMAGE_CACHE) {
+                            IMAGE_CACHE.put(urlStr, icon);
+                        }
                         targetLabel.setText("");
                         targetLabel.setIcon(icon);
                     }

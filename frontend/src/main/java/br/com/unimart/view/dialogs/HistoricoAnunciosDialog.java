@@ -22,6 +22,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 
 import br.com.unimart.controller.FeiraController;
@@ -120,42 +121,55 @@ public class HistoricoAnunciosDialog extends JDialog {
     }
 
     private void carregarHistorico() {
-        try {
-            List<Anuncio> anuncios = controller.buscarHistoricoUsuario();
-
-            int disponiveis = 0;
-            int concluidos = 0;
-            for (Anuncio anuncio : anuncios) {
-                if ("CONCLUIDO".equalsIgnoreCase(anuncio.getStatus())) {
-                    concluidos++;
-                } else {
-                    disponiveis++;
-                }
+        new SwingWorker<List<Anuncio>, Void>() {
+            @Override
+            protected List<Anuncio> doInBackground() throws SQLException {
+                return controller.buscarHistoricoUsuario();
             }
 
-            resumoPanel.removeAll();
-            resumoPanel.add(criarResumo("TOTAL", String.valueOf(anuncios.size()), "anúncios publicados", Theme.DARK));
-            resumoPanel.add(criarResumo("DISPONÍVEIS", String.valueOf(disponiveis), "recebendo interesse", Theme.GREEN));
-            resumoPanel.add(criarResumo("CONCLUÍDOS", String.valueOf(concluidos), "negociações finalizadas", new Color(0xB56A35)));
+            @Override
+            protected void done() {
+                try {
+                    List<Anuncio> anuncios = get();
+                    int disponiveis = 0;
+                    int concluidos = 0;
+                    for (Anuncio anuncio : anuncios) {
+                        if ("CONCLUIDO".equalsIgnoreCase(anuncio.getStatus())) {
+                            concluidos++;
+                        } else {
+                            disponiveis++;
+                        }
+                    }
 
-            anunciosPanel.removeAll();
-            if (anuncios.isEmpty()) {
-                anunciosPanel.add(criarEstadoVazio());
-            } else {
-                for (Anuncio anuncio : anuncios) {
-                    anunciosPanel.add(criarCardAnuncio(anuncio));
-                    anunciosPanel.add(Box.createVerticalStrut(12));
+                    resumoPanel.removeAll();
+                    resumoPanel.add(criarResumo("TOTAL", String.valueOf(anuncios.size()), "anúncios publicados", Theme.DARK));
+                    resumoPanel.add(criarResumo("DISPONÍVEIS", String.valueOf(disponiveis), "recebendo interesse", Theme.GREEN));
+                    resumoPanel.add(criarResumo("CONCLUÍDOS", String.valueOf(concluidos), "negociações finalizadas", new Color(0xB56A35)));
+
+                    anunciosPanel.removeAll();
+                    if (anuncios.isEmpty()) {
+                        anunciosPanel.add(criarEstadoVazio());
+                    } else {
+                        for (Anuncio anuncio : anuncios) {
+                            anunciosPanel.add(criarCardAnuncio(anuncio));
+                            anunciosPanel.add(Box.createVerticalStrut(12));
+                        }
+                    }
+
+                    resumoPanel.revalidate();
+                    resumoPanel.repaint();
+                    anunciosPanel.revalidate();
+                    anunciosPanel.repaint();
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+                    JOptionPane.showMessageDialog(HistoricoAnunciosDialog.this,
+                            "Erro ao carregar histórico: " + causa.getMessage(),
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
                 }
             }
-
-            resumoPanel.revalidate();
-            resumoPanel.repaint();
-            anunciosPanel.revalidate();
-            anunciosPanel.repaint();
-        } catch (SQLException | IllegalStateException ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar histórico: " + ex.getMessage(),
-                    "Erro", JOptionPane.ERROR_MESSAGE);
-        }
+        }.execute();
     }
 
     private JPanel criarResumo(String titulo, String valor, String descricao, Color cor) {

@@ -84,6 +84,14 @@ public final class DatabaseConfig {
                     "status TEXT NOT NULL DEFAULT 'PENDENTE', " +
                     "criado_em TEXT DEFAULT CURRENT_TIMESTAMP, " +
                     "FOREIGN KEY(anuncio_id) REFERENCES anuncios(id))");
+
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email)");
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_usuarios_status ON usuarios(status)");
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_anuncios_status ON anuncios(status)");
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_anuncios_usuario_id ON anuncios(usuario_id)");
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_anuncios_categoria ON anuncios(categoria)");
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_anuncios_modalidade ON anuncios(modalidade)");
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_interesses_anuncio_id ON interesses(anuncio_id)");
         }
     }
 }

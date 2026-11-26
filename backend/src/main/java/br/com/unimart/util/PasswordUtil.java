@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Utilitário para geração de salt e hash seguro de senhas com PBKDF2.
@@ -16,13 +17,14 @@ public final class PasswordUtil {
     private static final int ITERATIONS = 65536;
     private static final int KEY_LENGTH = 256;
     private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private PasswordUtil() {
     }
 
     public static String gerarSalt() {
         byte[] salt = new byte[16];
-        new SecureRandom().nextBytes(salt);
+        SECURE_RANDOM.nextBytes(salt);
         return Base64.getEncoder().encodeToString(salt);
     }
 
@@ -30,9 +32,13 @@ public final class PasswordUtil {
         try {
             byte[] salt = Base64.getDecoder().decode(saltBase64);
             PBEKeySpec spec = new PBEKeySpec(senha.toCharArray(), salt, ITERATIONS, KEY_LENGTH);
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM);
-            byte[] hash = factory.generateSecret(spec).getEncoded();
-            return Base64.getEncoder().encodeToString(hash);
+            try {
+                SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM);
+                byte[] hash = factory.generateSecret(spec).getEncoded();
+                return Base64.getEncoder().encodeToString(hash);
+            } finally {
+                spec.clearPassword();
+            }
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new IllegalStateException("Erro ao criptografar senha.", e);
         }
@@ -43,6 +49,9 @@ public final class PasswordUtil {
             return false;
         }
         String hashCalculado = gerarHash(senhaDigitada, saltBase64);
-        return MessageDigest.isEqual(hashCalculado.getBytes(), hashSalvo.getBytes());
+        return MessageDigest.isEqual(
+                hashCalculado.getBytes(StandardCharsets.UTF_8),
+                hashSalvo.getBytes(StandardCharsets.UTF_8)
+        );
     }
 }
