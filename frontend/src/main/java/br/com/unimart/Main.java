@@ -15,7 +15,7 @@ import br.com.unimart.view.MainFrame;
 import br.com.unimart.view.dialogs.LoginCadastroDialog;
 
 /**
- * Ponto de entrada da aplicação desktop UniMart.
+ * Ponto de entrada da aplicação desktop Trocaê.
  * Inicializa o banco de dados, exige autenticação e exibe a View principal.
  */
 public class Main {
