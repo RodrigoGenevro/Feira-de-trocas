@@ -1,21 +1,19 @@
-# UniMart - Feira de Trocas (Arquitetura MVC + Service em Java Swing)
+# UniMart - Feira de Trocas
 
-Aplicação desktop estruturada em camadas (**Model**, **Repository**, **Service**, **Controller** e **View**) com **Java 21 + Swing + SQLite**.
+Aplicação desktop Java Swing com SQLite para feira de trocas e doações da comunidade Senac.
 
-## Como executar
+O projeto está separado em dois módulos Maven:
 
-1. Extraia o projeto e abra a pasta raiz `feira-de-troca5.0` no **VS Code**.
-2. Abra `backend/src/main/java/br/com/unimart/Main.java` e clique em **Run**, ou execute via Maven dentro de `backend`:
-# UniMart - Feira de Trocas (Desktop Java Swing)
-
-Aplicação desktop unificada em **Java + Swing + SQLite** para feira de trocas e doações da comunidade Senac.
+- `backend/`: modelos, controlador, regras de negócio e acesso ao banco de dados.
+- `frontend/`: janela, componentes Swing, diálogos e ponto de entrada da aplicação.
 
 ## Como executar
 
-1. Abra a pasta raiz do projeto no **VS Code** ou terminal.
-2. Execute o `Main.java` diretamente pelo botão **Run** do VS Code, ou via Maven dentro da pasta `backend`:
+Na raiz do repositório, execute:
 
 ```bash
-cd backend
-mvn clean compile exec:java
+mvn -pl frontend -am install
+mvn -pl frontend exec:java
 ```
+
+Também é possível abrir a pasta raiz no VS Code, aguardar a importação dos módulos Maven e executar `frontend/src/main/java/br/com/unimart/Main.java`.

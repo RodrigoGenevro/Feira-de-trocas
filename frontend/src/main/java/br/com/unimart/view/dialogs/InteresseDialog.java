@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
 import javax.swing.border.LineBorder;
 
 import br.com.unimart.controller.FeiraController;
@@ -73,19 +74,34 @@ public class InteresseDialog extends BaseDialog {
         enviarBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         enviarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         enviarBtn.addActionListener(e -> {
-            try {
-                controller.enviarInteresse(
-                        anuncio.getId(),
-                        nomeField.getText(),
-                        msgArea.getText()
-                );
-                dispose();
-                JOptionPane.showMessageDialog(getOwner(), "Interesse enviado com sucesso!");
-            } catch (IllegalArgumentException ex) {
-                showWarning(ex.getMessage());
-            } catch (Exception ex) {
-                showError("Não foi possível enviar: " + ex.getMessage());
-            }
+            String nome = nomeField.getText();
+            String mensagem = msgArea.getText();
+
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    controller.enviarInteresse(anuncio.getId(), nome, mensagem);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        dispose();
+                        JOptionPane.showMessageDialog(getOwner(), "Interesse enviado com sucesso!");
+                    } catch (java.util.concurrent.ExecutionException ex) {
+                        Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+                        if (causa instanceof IllegalArgumentException) {
+                            showWarning(causa.getMessage());
+                        } else {
+                            showError("Não foi possível enviar: " + causa.getMessage());
+                        }
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }.execute();
         });
 
         formPanel.add(enviarBtn);

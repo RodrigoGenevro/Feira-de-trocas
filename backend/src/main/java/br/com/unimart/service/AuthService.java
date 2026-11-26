@@ -93,14 +93,6 @@ public class AuthService {
         return usuarioRepository.atualizar(atualizado);
     }
 
-    public List<Usuario> listarContas() throws SQLException {
-        return usuarioRepository.listarUsuariosAtivos();
-    }
-
-    public List<Usuario> listarContasCadastradas() throws SQLException {
-        return usuarioRepository.listarUsuariosAtivos();
-    }
-
     public List<Usuario> listarUsuariosCadastrados() throws SQLException {
         return usuarioRepository.listarUsuariosAtivos();
     }

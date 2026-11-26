@@ -15,7 +15,7 @@ public class AnuncioRepository {
     public List<Anuncio> buscarDisponiveis(String termoBusca, String categoria, String modalidade) throws SQLException {
         List<Anuncio> lista = new ArrayList<>();
 
-        String sql = "SELECT * FROM anuncios " +
+        String sql = "SELECT id, titulo, descricao, categoria, modalidade, nome, turma, foto, status, criado_em FROM anuncios " +
                      "WHERE (? = '' OR lower(titulo || ' ' || descricao) LIKE ?) " +
                      "AND (? = '' OR categoria = ?) " +
                      "AND (? = '' OR modalidade = ?) " +
@@ -104,7 +104,7 @@ public class AnuncioRepository {
 
     public List<Anuncio> buscarPorUsuario(int usuarioId, String nomeUsuario) throws SQLException {
         List<Anuncio> lista = new ArrayList<>();
-        String sql = "SELECT * FROM anuncios " +
+        String sql = "SELECT id, titulo, descricao, categoria, modalidade, nome, turma, foto, status, criado_em, usuario_id FROM anuncios " +
                      "WHERE usuario_id = ? OR (usuario_id IS NULL AND lower(nome) = lower(?)) " +
                      "ORDER BY id DESC";
 

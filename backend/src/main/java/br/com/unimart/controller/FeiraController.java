@@ -101,10 +101,6 @@ public class FeiraController {
         );
     }
 
-    public List<Usuario> listarContasCadastradas() throws SQLException {
-        return authService.listarContasCadastradas();
-    }
-
     public List<Usuario> buscarUsuariosCadastrados() throws SQLException {
         return authService.listarUsuariosCadastrados();
     }

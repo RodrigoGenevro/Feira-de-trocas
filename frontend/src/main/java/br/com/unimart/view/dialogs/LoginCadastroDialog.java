@@ -26,6 +26,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -240,43 +241,79 @@ public class LoginCadastroDialog extends JDialog {
     }
 
     private void executarLogin() {
-        try {
-            String email = loginEmailField.getText();
-            String senha = new String(loginSenhaField.getPassword());
+        String email = loginEmailField.getText();
+        String senha = new String(loginSenhaField.getPassword());
 
-            controller.login(email, senha);
-            autenticado = true;
-            dispose();
-            if (onAuthSuccess != null) {
-                onAuthSuccess.run();
+        new SwingWorker<Usuario, Void>() {
+            @Override
+            protected Usuario doInBackground() throws SQLException {
+                return controller.login(email, senha);
             }
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Atenção", JOptionPane.WARNING_MESSAGE);
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Erro no banco de dados: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    autenticado = true;
+                    dispose();
+                    if (onAuthSuccess != null) {
+                        onAuthSuccess.run();
+                    }
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+                    if (causa instanceof IllegalArgumentException) {
+                        JOptionPane.showMessageDialog(LoginCadastroDialog.this, causa.getMessage(),
+                                "Atenção", JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(LoginCadastroDialog.this,
+                                "Erro no banco de dados: " + causa.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }.execute();
     }
 
     private void executarCadastro() {
-        try {
-            String nome = cadNomeField.getText();
-            String email = cadEmailField.getText();
-            String turma = cadTurmaField.getText();
-            String senha = new String(cadSenhaField.getPassword());
-            String confirmar = new String(cadConfirmarField.getPassword());
+        String nome = cadNomeField.getText();
+        String email = cadEmailField.getText();
+        String turma = cadTurmaField.getText();
+        String senha = new String(cadSenhaField.getPassword());
+        String confirmar = new String(cadConfirmarField.getPassword());
 
-            controller.cadastrar(nome, email, turma, senha, confirmar);
-            autenticado = true;
-            JOptionPane.showMessageDialog(this, "Conta criada com sucesso!", "UniMart", JOptionPane.INFORMATION_MESSAGE);
-            dispose();
-            if (onAuthSuccess != null) {
-                onAuthSuccess.run();
+        new SwingWorker<Usuario, Void>() {
+            @Override
+            protected Usuario doInBackground() throws SQLException {
+                return controller.cadastrar(nome, email, turma, senha, confirmar);
             }
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Atenção", JOptionPane.WARNING_MESSAGE);
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao cadastrar usuário: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    autenticado = true;
+                    JOptionPane.showMessageDialog(LoginCadastroDialog.this, "Conta criada com sucesso!",
+                            "UniMart", JOptionPane.INFORMATION_MESSAGE);
+                    dispose();
+                    if (onAuthSuccess != null) {
+                        onAuthSuccess.run();
+                    }
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+                    if (causa instanceof IllegalArgumentException) {
+                        JOptionPane.showMessageDialog(LoginCadastroDialog.this, causa.getMessage(),
+                                "Atenção", JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(LoginCadastroDialog.this,
+                                "Erro ao cadastrar usuário: " + causa.getMessage(),
+                                "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }.execute();
     }
 
     private JLabel criarLabel(String texto) {
@@ -315,24 +352,44 @@ public class LoginCadastroDialog extends JDialog {
         loginContaCombo.removeAllItems();
         emailsPorConta.clear();
         loginContaCombo.addItem("Selecione uma conta cadastrada");
+        loginContaCombo.addItem("Carregando contas...");
 
-        try {
-            List<Usuario> usuarios = controller.buscarUsuariosCadastrados();
-            if (usuarios.isEmpty()) {
-                loginContaCombo.addItem("Nenhuma conta cadastrada");
-            } else {
-                for (Usuario usuario : usuarios) {
-                    String descricao = usuario.getNome() + " — " + usuario.getEmail();
-                    emailsPorConta.put(descricao, usuario.getEmail());
-                    loginContaCombo.addItem(descricao);
+        new SwingWorker<List<Usuario>, Void>() {
+            @Override
+            protected List<Usuario> doInBackground() throws SQLException {
+                return controller.buscarUsuariosCadastrados();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    List<Usuario> usuarios = get();
+                    loginContaCombo.removeAllItems();
+                    emailsPorConta.clear();
+                    loginContaCombo.addItem("Selecione uma conta cadastrada");
+
+                    if (usuarios.isEmpty()) {
+                        loginContaCombo.addItem("Nenhuma conta cadastrada");
+                    } else {
+                        for (Usuario usuario : usuarios) {
+                            String descricao = usuario.getNome() + " — " + usuario.getEmail();
+                            emailsPorConta.put(descricao, usuario.getEmail());
+                            loginContaCombo.addItem(descricao);
+                        }
+                    }
+                    loginContaCombo.addItem("Outro e-mail");
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    loginContaCombo.removeAllItems();
+                    loginContaCombo.addItem("Selecione uma conta cadastrada");
+                    loginContaCombo.addItem("Outro e-mail");
+                    Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+                    JOptionPane.showMessageDialog(LoginCadastroDialog.this,
+                            "Não foi possível carregar o histórico de contas: " + causa.getMessage(),
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
                 }
             }
-            loginContaCombo.addItem("Outro e-mail");
-        } catch (SQLException ex) {
-            loginContaCombo.addItem("Outro e-mail");
-            JOptionPane.showMessageDialog(this,
-                    "Não foi possível carregar o histórico de contas: " + ex.getMessage(),
-                    "Erro", JOptionPane.ERROR_MESSAGE);
-        }
+        }.execute();
     }
 }
