@@ -1,11 +1,15 @@
 package br.com.unimart.repository;
 
-import br.com.unimart.model.Anuncio;
-import br.com.unimart.util.DatabaseConfig;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import br.com.unimart.model.Anuncio;
+import br.com.unimart.util.DatabaseConfig;
 
 /**
  * Camada de acesso a dados (DAO/Repository) responsável pelas operações SQL de Anuncio.
@@ -38,19 +42,7 @@ public class AnuncioRepository {
 
             try (ResultSet r = p.executeQuery()) {
                 while (r.next()) {
-                    Anuncio a = new Anuncio(
-                            r.getInt("id"),
-                            r.getString("titulo"),
-                            r.getString("descricao"),
-                            r.getString("categoria"),
-                            r.getString("modalidade"),
-                            r.getString("nome"),
-                            r.getString("turma"),
-                            r.getString("foto"),
-                            r.getString("status"),
-                            r.getString("criado_em")
-                    );
-                    lista.add(a);
+                    lista.add(montarAnuncio(r));
                 }
             }
         }

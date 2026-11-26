@@ -70,16 +70,7 @@ public class UsuarioRepository {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new Usuario(
-                            rs.getInt("id"),
-                            rs.getString("nome"),
-                            rs.getString("email"),
-                            rs.getString("turma"),
-                            rs.getString("senha_hash"),
-                            rs.getString("salt"),
-                            rs.getString("status"),
-                            rs.getString("criado_em")
-                    );
+                    return mapearUsuario(rs);
                 }
             }
         }
@@ -119,16 +110,7 @@ public class UsuarioRepository {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                usuarios.add(new Usuario(
-                        rs.getInt("id"),
-                        rs.getString("nome"),
-                        rs.getString("email"),
-                        rs.getString("turma"),
-                        rs.getString("senha_hash"),
-                        rs.getString("salt"),
-                        rs.getString("status"),
-                        rs.getString("criado_em")
-                ));
+                usuarios.add(mapearUsuario(rs));
             }
         }
         return usuarios;
@@ -144,18 +126,22 @@ public class UsuarioRepository {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                usuarios.add(new Usuario(
-                        rs.getInt("id"),
-                        rs.getString("nome"),
-                        rs.getString("email"),
-                        rs.getString("turma"),
-                        rs.getString("senha_hash"),
-                        rs.getString("salt"),
-                        rs.getString("status"),
-                        rs.getString("criado_em")
-                ));
+                usuarios.add(mapearUsuario(rs));
             }
         }
         return usuarios;
+    }
+
+    private Usuario mapearUsuario(ResultSet rs) throws SQLException {
+        return new Usuario(
+                rs.getInt("id"),
+                rs.getString("nome"),
+                rs.getString("email"),
+                rs.getString("turma"),
+                rs.getString("senha_hash"),
+                rs.getString("salt"),
+                rs.getString("status"),
+                rs.getString("criado_em")
+        );
     }
 }

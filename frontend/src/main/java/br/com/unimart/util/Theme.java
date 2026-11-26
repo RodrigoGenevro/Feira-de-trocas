@@ -30,24 +30,19 @@ public final class Theme {
     }
 
     public static JButton createButton(String text, Color bg, Color fg) {
-    JButton btn = new JButton(text);
-
-    btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-
-    btn.setBackground(bg);
-    btn.setForeground(fg);
-
-    btn.setOpaque(true);
-    btn.setContentAreaFilled(true);
-    btn.setBorderPainted(false);
-    btn.setFocusPainted(false);
-
-    btn.setFont(new Font("SansSerif", Font.BOLD, 13));
-    btn.setBorder(new EmptyBorder(11, 18, 11, 18));
-    btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-    return btn;
-}
+        JButton button = new JButton(text);
+        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        button.setBackground(bg);
+        button.setForeground(fg);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setFont(new Font("SansSerif", Font.BOLD, 13));
+        button.setBorder(new EmptyBorder(11, 18, 11, 18));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return button;
+    }
 
     public static JLabel createFieldLabel(String text) {
         JLabel lbl = new JLabel(text);

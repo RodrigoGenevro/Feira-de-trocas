@@ -14,6 +14,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -45,6 +46,9 @@ import br.com.unimart.view.dialogs.HistoricoAnunciosDialog;
  * Janela principal da aplicação (Camada View).
  */
 public class MainFrame extends JFrame {
+
+    private static final int GRID_COLUMNS = 3;
+    private static final int GRID_GAP = 18;
 
     private final FeiraController controller;
 
@@ -300,7 +304,7 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createGridContainer() {
-        gridPanel = new JPanel(new GridLayout(0, 3, 18, 18));
+        gridPanel = new JPanel(new GridLayout(0, GRID_COLUMNS, GRID_GAP, GRID_GAP));
         gridPanel.setBackground(Theme.BG_MAIN);
         gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         return gridPanel;
@@ -329,39 +333,60 @@ public class MainFrame extends JFrame {
                 }
 
                 try {
-                    List<Anuncio> itens = get();
-                    gridPanel.removeAll();
-                    contadorLabel.setText(itens.size() + (itens.size() == 1 ? " item" : " itens"));
-
-                    if (itens.isEmpty()) {
-                        gridPanel.setLayout(new BorderLayout());
-                        JLabel empty = new JLabel("Nenhum anúncio encontrado. Tente mudar os filtros ou publique o primeiro!", JLabel.CENTER);
-                        empty.setFont(new Font("SansSerif", Font.PLAIN, 15));
-                        empty.setForeground(Theme.TEXT_MUTED);
-                        empty.setBorder(new EmptyBorder(50, 20, 50, 20));
-                        gridPanel.add(empty, BorderLayout.CENTER);
-                    } else {
-                        gridPanel.setLayout(new GridLayout(0, 3, 18, 18));
-                        for (Anuncio item : itens) {
-                            gridPanel.add(new AnuncioCard(item, anuncioSelecionado ->
-                                    executarAcaoAutenticada(() ->
-                                            new InteresseDialog(MainFrame.this, controller, anuncioSelecionado).setVisible(true)
-                                    )
-                            ));
-                        }
-                    }
-
-                    gridPanel.revalidate();
-                    gridPanel.repaint();
-                } catch (Exception e) {
+                    exibirAnuncios(get());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    exibirErroCarregamento(e);
+                } catch (ExecutionException e) {
                     Throwable causa = e.getCause() != null ? e.getCause() : e;
-                    JOptionPane.showMessageDialog(MainFrame.this,
-                            "Erro ao carregar anúncios: " + causa.getMessage(),
-                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    exibirErroCarregamento(causa);
                 }
             }
         };
         gridWorker.execute();
+    }
+
+    private void exibirAnuncios(List<Anuncio> anuncios) {
+        gridPanel.removeAll();
+        contadorLabel.setText(anuncios.size() + (anuncios.size() == 1 ? " item" : " itens"));
+
+        if (anuncios.isEmpty()) {
+            exibirEstadoVazio();
+        } else {
+            gridPanel.setLayout(new GridLayout(0, GRID_COLUMNS, GRID_GAP, GRID_GAP));
+            for (Anuncio anuncio : anuncios) {
+                gridPanel.add(criarCartaoAnuncio(anuncio));
+            }
+        }
+
+        gridPanel.revalidate();
+        gridPanel.repaint();
+    }
+
+    private void exibirEstadoVazio() {
+        gridPanel.setLayout(new BorderLayout());
+        JLabel empty = new JLabel(
+                "Nenhum anúncio encontrado. Tente mudar os filtros ou publique o primeiro!",
+                JLabel.CENTER
+        );
+        empty.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        empty.setForeground(Theme.TEXT_MUTED);
+        empty.setBorder(new EmptyBorder(50, 20, 50, 20));
+        gridPanel.add(empty, BorderLayout.CENTER);
+    }
+
+    private AnuncioCard criarCartaoAnuncio(Anuncio anuncio) {
+        return new AnuncioCard(anuncio, anuncioSelecionado ->
+                executarAcaoAutenticada(() ->
+                        new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true)
+                )
+        );
+    }
+
+    private void exibirErroCarregamento(Throwable erro) {
+        JOptionPane.showMessageDialog(this,
+                "Erro ao carregar anúncios: " + erro.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
     }
 
     private void agendarAtualizacaoGrid() {
