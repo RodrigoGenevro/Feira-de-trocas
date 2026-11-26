@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import br.com.unimart.model.Usuario;
 import br.com.unimart.util.DatabaseConfig;
@@ -105,5 +107,55 @@ public class UsuarioRepository {
 
     public boolean existePorEmail(String email) throws SQLException {
         return buscarPorEmail(email) != null;
+    }
+
+    public List<Usuario> buscarHistoricoContas() throws SQLException {
+        List<Usuario> usuarios = new ArrayList<>();
+
+        String sql = "SELECT id, nome, email, turma, senha_hash, salt, status, criado_em FROM usuarios ORDER BY criado_em DESC";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                usuarios.add(new Usuario(
+                        rs.getInt("id"),
+                        rs.getString("nome"),
+                        rs.getString("email"),
+                        rs.getString("turma"),
+                        rs.getString("senha_hash"),
+                        rs.getString("salt"),
+                        rs.getString("status"),
+                        rs.getString("criado_em")
+                ));
+            }
+        }
+        return usuarios;
+    }
+
+    public List<Usuario> listarUsuariosAtivos() throws SQLException {
+        List<Usuario> usuarios = new ArrayList<>();
+        String sql = "SELECT id, nome, email, turma, senha_hash, salt, status, criado_em " +
+                     "FROM usuarios WHERE status = 'ATIVO' ORDER BY criado_em DESC, id DESC";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                usuarios.add(new Usuario(
+                        rs.getInt("id"),
+                        rs.getString("nome"),
+                        rs.getString("email"),
+                        rs.getString("turma"),
+                        rs.getString("senha_hash"),
+                        rs.getString("salt"),
+                        rs.getString("status"),
+                        rs.getString("criado_em")
+                ));
+            }
+        }
+        return usuarios;
     }
 }

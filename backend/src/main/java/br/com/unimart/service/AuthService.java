@@ -1,6 +1,7 @@
 package br.com.unimart.service;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import br.com.unimart.model.Usuario;
 import br.com.unimart.repository.UsuarioRepository;
@@ -90,5 +91,13 @@ public class AuthService {
         }
 
         return usuarioRepository.atualizar(atualizado);
+    }
+
+    public List<Usuario> listarContas() throws SQLException {
+        return usuarioRepository.listarTodos();
+    }
+
+    public List<Usuario> listarUsuariosCadastrados() throws SQLException {
+        return usuarioRepository.listarUsuariosAtivos();
     }
 }

@@ -37,6 +37,7 @@ import br.com.unimart.view.dialogs.InteresseDialog;
 import br.com.unimart.view.dialogs.LoginCadastroDialog;
 import br.com.unimart.view.dialogs.NovoAnuncioDialog;
 import br.com.unimart.view.dialogs.PerfilDialog;
+import br.com.unimart.view.dialogs.HistoricoAnunciosDialog;
 
 /**
  * Janela principal da aplicação (Camada View).
@@ -130,6 +131,9 @@ public class MainFrame extends JFrame {
             JButton perfilBtn = Theme.createButton("Meu perfil", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
             perfilBtn.addActionListener(e -> new PerfilDialog(this, controller, this::atualizarHeaderAuth).setVisible(true));
 
+            JButton historicoBtn = Theme.createButton("Meu histórico", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+            historicoBtn.addActionListener(e -> new HistoricoAnunciosDialog(this, controller).setVisible(true));
+
             JButton sairBtn = Theme.createButton("Sair", new Color(0xF6, 0xF7, 0xF7), Theme.TEXT_MUTED);
             sairBtn.addActionListener(e -> {
                 controller.logout();
@@ -143,6 +147,7 @@ public class MainFrame extends JFrame {
             });
 
             authActionsPanel.add(perfilBtn);
+            authActionsPanel.add(historicoBtn);
             authActionsPanel.add(sairBtn);
         } else {
             JButton entrarBtn = Theme.createButton("Entrar / Cadastrar", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);

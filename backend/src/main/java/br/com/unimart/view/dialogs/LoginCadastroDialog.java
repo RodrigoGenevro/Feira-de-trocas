@@ -8,11 +8,15 @@ import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -26,6 +30,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import br.com.unimart.controller.FeiraController;
+import br.com.unimart.model.Usuario;
 import br.com.unimart.util.Theme;
 
 /**
@@ -48,6 +53,9 @@ public class LoginCadastroDialog extends JDialog {
     private JPasswordField cadSenhaField;
     private JPasswordField cadConfirmarField;
 
+    private JComboBox<String> loginContaCombo;
+    private final Map<String, String> emailsPorConta = new HashMap<>();
+
     public LoginCadastroDialog(JFrame parent, FeiraController controller, Runnable onAuthSuccess) {
         this(parent, controller, onAuthSuccess, null);
     }
@@ -58,7 +66,7 @@ public class LoginCadastroDialog extends JDialog {
         this.onAuthSuccess = onAuthSuccess;
         this.onCancel = onCancel;
 
-        setSize(450, 560);
+        setSize(450, 620);
         setResizable(false);
         setLocationRelativeTo(parent);
         getContentPane().setBackground(Color.WHITE);
@@ -126,9 +134,40 @@ public class LoginCadastroDialog extends JDialog {
         loginEmailField = criarTextField();
         loginSenhaField = criarPasswordField();
 
+        loginContaCombo = new JComboBox<>();
+        loginContaCombo.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        loginContaCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        loginContaCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        loginContaCombo.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(Theme.BORDER_COLOR, 1, true),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+        loginContaCombo.addActionListener(e -> {
+            String selecao = (String) loginContaCombo.getSelectedItem();
+            if (selecao == null || selecao.startsWith("Selecione") || selecao.startsWith("Outro")) {
+                if (selecao != null && selecao.startsWith("Outro")) {
+                    loginEmailField.setText("");
+                    loginEmailField.requestFocusInWindow();
+                }
+                return;
+            }
+
+            String email = emailsPorConta.get(selecao);
+            if (email != null) {
+                loginEmailField.setText(email);
+                loginSenhaField.requestFocusInWindow();
+            }
+        });
+        carregarContasRapidas();
+
         panel.add(criarLabel("E-mail"));
         panel.add(Box.createVerticalStrut(6));
         panel.add(loginEmailField);
+        panel.add(Box.createVerticalStrut(4));
+
+        panel.add(criarLabel("Conta rápida"));
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(loginContaCombo);
         panel.add(Box.createVerticalStrut(14));
 
         panel.add(criarLabel("Senha"));
@@ -270,5 +309,30 @@ public class LoginCadastroDialog extends JDialog {
                 new EmptyBorder(5, 10, 5, 10)
         ));
         return field;
+    }
+
+    private void carregarContasRapidas() {
+        loginContaCombo.removeAllItems();
+        emailsPorConta.clear();
+        loginContaCombo.addItem("Selecione uma conta cadastrada");
+
+        try {
+            List<Usuario> usuarios = controller.buscarUsuariosCadastrados();
+            if (usuarios.isEmpty()) {
+                loginContaCombo.addItem("Nenhuma conta cadastrada");
+            } else {
+                for (Usuario usuario : usuarios) {
+                    String descricao = usuario.getNome() + " — " + usuario.getEmail();
+                    emailsPorConta.put(descricao, usuario.getEmail());
+                    loginContaCombo.addItem(descricao);
+                }
+            }
+            loginContaCombo.addItem("Outro e-mail");
+        } catch (SQLException ex) {
+            loginContaCombo.addItem("Outro e-mail");
+            JOptionPane.showMessageDialog(this,
+                    "Não foi possível carregar o histórico de contas: " + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

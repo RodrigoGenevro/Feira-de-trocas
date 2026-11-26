@@ -13,6 +13,7 @@ public class Anuncio extends EntidadeBase {
     private String nomeAutor;
     private String turma;
     private String fotoUrl;
+    private Integer usuarioId;
 
     public Anuncio() {
         super(null, "DISPONIVEL", null);
@@ -89,6 +90,14 @@ public class Anuncio extends EntidadeBase {
 
     public void setFotoUrl(String fotoUrl) {
         this.fotoUrl = fotoUrl != null ? fotoUrl.trim() : "";
+    }
+
+    public Integer getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(Integer usuarioId) {
+        this.usuarioId = usuarioId;
     }
 
     public String getModalidadeFormatada() {

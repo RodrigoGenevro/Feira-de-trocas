@@ -47,4 +47,8 @@ public class AnuncioService {
         }
         repository.atualizarStatus(id, "CONCLUIDO");
     }
+
+    public List<Anuncio> listarHistoricoUsuario(int usuarioId, String nomeUsuario) throws SQLException {
+        return repository.buscarPorUsuario(usuarioId, nomeUsuario);
+    }
 }
