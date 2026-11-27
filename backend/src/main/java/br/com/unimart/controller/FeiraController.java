@@ -178,17 +178,30 @@ public class FeiraController {
     }
 
     public void cancelarInteresse(int interesseId) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            apiClient.cancelarInteresse(interesseId);
+            return;
+        }
         Usuario usuario = usuarioAutenticado();
         interesseService.cancelarInteresse(interesseId, usuario.getId());
     }
 
     public List<Interesse> buscarInteressesDoUsuario() throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            return apiClient.buscarInteressesDoUsuario();
+        }
         Usuario usuario = usuarioAutenticado();
         return interesseService.listarInteressesDoUsuario(usuario.getId());
     }
 
     public void denunciarAnuncio(int anuncioId, String motivo, String detalhes) throws SQLException {
         Usuario usuario = usuarioAutenticado();
+        if (apiClient != null) {
+            apiClient.denunciarAnuncio(anuncioId, motivo, detalhes);
+            return;
+        }
         Denuncia denuncia = new Denuncia(
                 anuncioId, usuario.getId(), usuario.getNome(), motivo, detalhes
         );
@@ -237,6 +250,11 @@ public class FeiraController {
     }
 
     public void reativarAnuncio(int anuncioId) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            apiClient.reativarAnuncio(anuncioId);
+            return;
+        }
         Usuario usuario = usuarioAutenticado();
         anuncioService.reativarAnuncio(anuncioId, usuario.getId(), usuario.getNome());
     }
