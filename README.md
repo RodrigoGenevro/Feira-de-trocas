@@ -114,8 +114,10 @@ statements. The database account must be allowed to create the tables and
 indexes used by migrations.
 
 If `TROCAE_API_URL` is unset, the desktop app uses its local SQLite database;
-data stays on that computer and no API server is required. To launch in this
-mode, leave the variable unset and run:
+data stays on that computer and no API server is required. The app displays a
+notice when it starts in this mode. If `TROCAE_API_URL` is set, the app uses that
+API and reports connection failures rather than silently switching databases.
+To launch in local mode, leave the variable unset and run:
 
 ```powershell
 Remove-Item Env:TROCAE_API_URL -ErrorAction SilentlyContinue

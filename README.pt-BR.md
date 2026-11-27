@@ -115,7 +115,10 @@ banco precisa ter permissão para criar as tabelas e índices das migrações.
 
 Se `TROCAE_API_URL` não estiver configurada, o app desktop usa o banco SQLite
 local; os dados ficam apenas nesse computador e não é necessário iniciar uma API.
-Para iniciar nesse modo, deixe a variável sem configuração e execute:
+O app exibe um aviso ao iniciar nesse modo. Se `TROCAE_API_URL` estiver
+configurada, o app usa essa API e informa falhas de conexão, sem trocar de banco
+silenciosamente. Para iniciar no modo local, deixe a variável sem configuração
+e execute:
 
 ```powershell
 Remove-Item Env:TROCAE_API_URL -ErrorAction SilentlyContinue
