@@ -1,6 +1,5 @@
 package br.com.unimart;
 
-import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,13 +9,13 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import br.com.unimart.controller.FeiraController;
-import br.com.unimart.util.DatabaseConfig;
+import br.com.unimart.api.FeiraApiClient;
 import br.com.unimart.view.MainFrame;
 import br.com.unimart.view.dialogs.LoginCadastroDialog;
 
 /**
  * Ponto de entrada da aplicação desktop Trocaê.
- * Inicializa o banco de dados, exige autenticação e exibe a View principal.
+ * Configura o cliente da API, exige autenticação e exibe a View principal.
  */
 public class Main {
 
@@ -25,17 +24,18 @@ public class Main {
     public static void main(String[] args) {
         configurarAparenciaNativa();
 
+        FeiraApiClient apiClient;
         try {
-            DatabaseConfig.initDatabase();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null,
-                    "Erro crítico ao inicializar o banco de dados SQLite:\n" + e.getMessage(),
-                    "Erro de Inicialização", JOptionPane.ERROR_MESSAGE);
+            apiClient = FeiraApiClient.fromEnvironment();
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(
+                    null, e.getMessage(), "Configuração inválida", JOptionPane.ERROR_MESSAGE
+            );
             return;
         }
 
         SwingUtilities.invokeLater(() -> {
-            FeiraController controller = new FeiraController();
+            FeiraController controller = new FeiraController(apiClient);
             MainFrame mainFrame = new MainFrame(controller);
 
             LoginCadastroDialog acessoDialog = new LoginCadastroDialog(

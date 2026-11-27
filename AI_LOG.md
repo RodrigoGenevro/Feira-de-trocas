@@ -147,3 +147,30 @@ generated work, and decisions made after reviewing the output.
   bounded by time, byte size, and image dimensions. Maven was unavailable on
   PATH; all 23 discovered VS Code tests passed, while the Maven build could not
   be run.
+### 26/11/2026 — Fixing the “Seu anúncio” button color
+
+- **Main prompt:** When the listing is mine, the button color looks odd; make it
+  the same color as the other buttons.
+- **What the AI generated:** In `AnuncioCard.java`, the disabled own-listing
+  button now uses a custom `BasicButtonUI` that always paints the text in white
+  and keeps the `Theme.GREEN` background, ignoring the darkening effect Swing
+  applies to disabled buttons.
+- **What the team kept:** The “Seu anúncio” button now looks exactly like the
+  other buttons while remaining non-clickable and keeping its tooltip.
+- **What the team corrected or rejected, and why:** Nothing; compiling with
+  `javac` (including the backend models) passed without errors.
+
+### 27/11/2026 — Shared Supabase database and Render deployment
+
+- **Main prompt:** Prepare the project to use a shared Supabase database and
+  document how to deploy the API to Render.
+- **What the AI generated:** A Java HTTP API backed by PostgreSQL, desktop
+  client integration, database migration support, Render deployment
+  configuration, and setup documentation.
+- **What the team kept:** The changes are present in the
+  `feature/supabase-render-deployment` branch and its pull request.
+- **What the team corrected or rejected, and why:** The pull request's GitHub
+  Actions build, test, and lint step failed. The local Maven verification
+  identified an unused frontend import; the full pipeline must pass before
+  merging. A live Supabase/Render deployment was not verified as part of this
+  change.
