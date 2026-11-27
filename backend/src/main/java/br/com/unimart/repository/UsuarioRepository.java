@@ -1,6 +1,7 @@
 package br.com.unimart.repository;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,10 +14,20 @@ import br.com.unimart.util.DatabaseConfig;
 
 public class UsuarioRepository {
 
+    private final String jdbcUrl;
+
+    public UsuarioRepository() {
+        this(DatabaseConfig.getActiveDbUrl());
+    }
+
+    UsuarioRepository(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
+    }
+
     public Usuario salvar(Usuario usuario) throws SQLException {
         String sql = "INSERT INTO usuarios (nome, email, turma, senha_hash, salt, status) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseConfig.getConnection();
+        try (Connection conn = abrirConexao();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, usuario.getNome());
@@ -40,7 +51,7 @@ public class UsuarioRepository {
     public Usuario atualizar(Usuario usuario) throws SQLException {
         String sql = "UPDATE usuarios SET nome = ?, email = ?, turma = ?, senha_hash = ?, salt = ? WHERE id = ?";
 
-        try (Connection conn = DatabaseConfig.getConnection();
+        try (Connection conn = abrirConexao();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, usuario.getNome());
@@ -63,7 +74,7 @@ public class UsuarioRepository {
         String sql = "SELECT id, nome, email, turma, senha_hash, salt, status, criado_em " +
                      "FROM usuarios WHERE lower(email) = lower(?) AND status = 'ATIVO' LIMIT 1";
 
-        try (Connection conn = DatabaseConfig.getConnection();
+        try (Connection conn = abrirConexao();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, email.trim());
@@ -84,7 +95,7 @@ public class UsuarioRepository {
 
         String sql = "SELECT id FROM usuarios WHERE lower(email) = lower(?) AND id <> ? LIMIT 1";
 
-        try (Connection conn = DatabaseConfig.getConnection();
+        try (Connection conn = abrirConexao();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, email.trim());
@@ -105,7 +116,7 @@ public class UsuarioRepository {
 
         String sql = "SELECT id, nome, email, turma, senha_hash, salt, status, criado_em FROM usuarios ORDER BY criado_em DESC";
 
-        try (Connection conn = DatabaseConfig.getConnection();
+        try (Connection conn = abrirConexao();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -121,7 +132,7 @@ public class UsuarioRepository {
         String sql = "SELECT id, nome, email, turma, senha_hash, salt, status, criado_em " +
                      "FROM usuarios WHERE status = 'ATIVO' ORDER BY criado_em DESC, id DESC";
 
-        try (Connection conn = DatabaseConfig.getConnection();
+        try (Connection conn = abrirConexao();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -143,5 +154,9 @@ public class UsuarioRepository {
                 rs.getString("status"),
                 rs.getString("criado_em")
         );
+    }
+
+    private Connection abrirConexao() throws SQLException {
+        return DriverManager.getConnection(jdbcUrl);
     }
 }

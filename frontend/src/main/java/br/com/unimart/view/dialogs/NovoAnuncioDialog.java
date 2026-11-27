@@ -30,11 +30,19 @@ public class NovoAnuncioDialog extends BaseDialog {
 
     private final FeiraController controller;
     private final Runnable onSuccessCallback;
+    private final Anuncio anuncioParaEditar;
 
     public NovoAnuncioDialog(Frame owner, FeiraController controller, Runnable onSuccessCallback) {
-        super(owner, "Novo anúncio", 480, 560);
+        this(owner, controller, onSuccessCallback, null);
+    }
+
+    public NovoAnuncioDialog(
+            Frame owner, FeiraController controller, Runnable onSuccessCallback, Anuncio anuncioParaEditar
+    ) {
+        super(owner, anuncioParaEditar == null ? "Novo anúncio" : "Editar anúncio", 480, 560);
         this.controller = controller;
         this.onSuccessCallback = onSuccessCallback;
+        this.anuncioParaEditar = anuncioParaEditar;
         construirFormulario();
     }
 
@@ -78,7 +86,17 @@ public class NovoAnuncioDialog extends BaseDialog {
 
         JTextField fotoField = Theme.createInputField();
 
-        formPanel.add(createDialogHeader("Novo anúncio"));
+        if (anuncioParaEditar != null) {
+            tituloField.setText(anuncioParaEditar.getTitulo());
+            descArea.setText(anuncioParaEditar.getDescricao());
+            catBox.setSelectedItem(anuncioParaEditar.getCategoria());
+            modBox.setSelectedItem(anuncioParaEditar.getModalidade());
+            fotoField.setText(anuncioParaEditar.getFotoUrl());
+        }
+
+        String tituloFormulario = anuncioParaEditar == null ? "Novo anúncio" : "Editar anúncio";
+        String textoBotao = anuncioParaEditar == null ? "Publicar anúncio" : "Salvar alterações";
+        formPanel.add(createDialogHeader(tituloFormulario));
         formPanel.add(Box.createVerticalStrut(14));
         formPanel.add(Theme.createFieldLabel("Seu nome *"));
         formPanel.add(nomeField);
@@ -120,10 +138,12 @@ public class NovoAnuncioDialog extends BaseDialog {
         formPanel.add(fotoField);
         formPanel.add(Box.createVerticalStrut(18));
 
-        JButton submitBtn = Theme.createButton("Publicar anúncio", Theme.GREEN, Color.WHITE);
+        JButton submitBtn = Theme.createButton(textoBotao, Theme.GREEN, Color.WHITE);
         submitBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         submitBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         submitBtn.addActionListener(e -> {
+            submitBtn.setEnabled(false);
+            submitBtn.setText(anuncioParaEditar == null ? "Publicando..." : "Salvando...");
             String nome = nomeField.getText();
             String turma = turmaField.getText();
             String titulo = tituloField.getText();
@@ -135,6 +155,12 @@ public class NovoAnuncioDialog extends BaseDialog {
             new SwingWorker<Anuncio, Void>() {
                 @Override
                 protected Anuncio doInBackground() throws Exception {
+                    if (anuncioParaEditar != null) {
+                        controller.atualizarAnuncio(
+                                anuncioParaEditar.getId(), titulo, descricao, categoria, modalidade, foto
+                        );
+                        return anuncioParaEditar;
+                    }
                     return controller.criarAnuncio(nome, turma, titulo, descricao,
                             categoria, modalidade, foto);
                 }
@@ -152,10 +178,17 @@ public class NovoAnuncioDialog extends BaseDialog {
                         if (causa instanceof IllegalArgumentException) {
                             showWarning(causa.getMessage());
                         } else {
-                            showError("Não foi possível publicar o anúncio: " + causa.getMessage());
+                            String acao = anuncioParaEditar == null ? "publicar" : "salvar as alterações do";
+                            showError("Não foi possível " + acao + " anúncio: " + causa.getMessage());
                         }
+                        submitBtn.setEnabled(true);
+                        submitBtn.setText(textoBotao);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
+                        submitBtn.setEnabled(true);
+                        submitBtn.setText(textoBotao);
+                        String acao = anuncioParaEditar == null ? "publicação" : "edição";
+                        showError("A " + acao + " do anúncio foi interrompida.");
                     }
                 }
             }.execute();

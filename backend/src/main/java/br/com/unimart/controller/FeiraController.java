@@ -92,6 +92,23 @@ public class FeiraController {
         return anuncioService.publicarAnuncio(novo);
     }
 
+    public void atualizarAnuncio(int anuncioId, String titulo, String descricao,
+                                 String categoria, String modalidade, String fotoUrl) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        Anuncio anuncio = new Anuncio();
+        anuncio.setId(anuncioId);
+        anuncio.setNomeAutor(usuario.getNome());
+        anuncio.setTurma(usuario.getTurma());
+        anuncio.setTitulo(titulo);
+        anuncio.setDescricao(descricao);
+        anuncio.setCategoria(categoria);
+        anuncio.setModalidade(modalidade);
+        anuncio.setFotoUrl(fotoUrl);
+        anuncio.setUsuarioId(usuario.getId());
+
+        anuncioService.atualizarAnuncio(anuncio, usuario.getId(), usuario.getNome());
+    }
+
     public void enviarInteresse(int anuncioId, String mensagem) throws SQLException {
         Usuario usuario = usuarioAutenticado();
         Interesse interesse = new Interesse(anuncioId, usuario.getNome(), mensagem);

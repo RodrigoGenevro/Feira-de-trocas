@@ -83,6 +83,34 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
   apenas como referência visual; a tela foi implementada com componentes Swing e
   formas Java2D, sem incorporar a imagem. Os testes não foram executados para
   esta alteração.
+
+### 26/11/2026 — Melhorias de confiabilidade e backup
+
+- **Prompt principal:** Implementar as melhorias sugeridas: validar os fluxos,
+  padronizar a marca Trocaê, melhorar o feedback das operações, oferecer backup
+  do banco e adicionar testes de fluxo.
+- **O que a IA gerou:** Atualizou os READMEs bilíngues, adicionou uma ação de
+  backup por snapshot do SQLite, estados de carregamento e erro, bloqueio contra
+  envios repetidos durante operações assíncronas e testes com banco temporário
+  para integridade do backup e fluxo de cadastro até conclusão do anúncio.
+- **O que o time aproveitou:** Destino do backup escolhido pelo usuário e testes
+  isolados do banco real da aplicação.
+- **O que o time corrigiu ou rejeitou, e por quê:** Os 12 testes descobertos
+  pelo VS Code passaram. A tarefa Maven `verify`/Checkstyle não foi executada
+  porque a ferramenta de build Java não iniciou com o modelo configurado.
+
+### 26/11/2026 — Edição de anúncios
+
+- **Prompt principal:** Adicionar uma opção para cada usuário editar os próprios
+  anúncios.
+- **O que a IA gerou:** Adicionou a ação de edição em **Meus anúncios**,
+  reutilizou o formulário de publicação para salvar as alterações e incluiu
+  verificações de propriedade e disponibilidade na atualização do banco.
+- **O que o time aproveitou:** O anunciante pode editar anúncios disponíveis;
+  anúncios reservados ou concluídos não podem ser editados.
+- **O que o time corrigiu ou rejeitou, e por quê:** A edição foi limitada a
+  anúncios disponíveis para não alterar reservas em andamento nem o histórico
+  de anúncios concluídos. Foram adicionados testes direcionados ao repositório.
 ### 26/11/2026 — Correção da cor do botão “Seu anúncio”
 
 - **Prompt principal:** Quando o anúncio é meu, a cor do botão fica estranha;

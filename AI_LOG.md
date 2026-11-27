@@ -78,6 +78,33 @@ generated work, and decisions made after reviewing the output.
   as visual direction only; the screen was implemented with native Swing
   components and Java2D shapes rather than embedding the image. Tests were not
   run for this change.
+
+### 26/11/2026 — Listing editing
+
+- **Main prompt:** Add an option for users to edit their own listings.
+- **What the AI generated:** Added an edit action to **Meus anúncios**, reused
+  the listing form to save changes, and added owner and availability checks to
+  the database update.
+- **What the team kept:** Owners can edit available listings; reserved and
+  completed listings cannot be edited.
+- **What the team corrected or rejected, and why:** Editing was restricted to
+  available listings so active reservations and completed listing history are
+  not changed. Focused repository tests were added.
+
+### 26/11/2026 — Reliability and backup improvements
+
+- **Main prompt:** Implement the suggested application improvements: verify
+  flows, standardize the Trocaê brand, improve operation feedback, provide a
+  database backup, and add flow tests.
+- **What the AI generated:** Updated the bilingual README, added a SQLite
+  snapshot backup action, displayed loading and error states, prevented
+  repeated submissions during asynchronous operations, and added temporary
+  database tests for backup integrity and registration-to-listing completion.
+- **What the team kept:** A user-selected backup destination and tests isolated
+  from the real application database.
+- **What the team corrected or rejected, and why:** All 12 tests discovered by
+  VS Code passed. The Maven `verify`/Checkstyle task was not run because the
+  Java build tool could not start with the configured model.
 ### 26/11/2026 — Fixing the “Seu anúncio” button color
 
 - **Main prompt:** When the listing is mine, the button color looks odd; make it

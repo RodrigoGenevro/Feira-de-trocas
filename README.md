@@ -1,8 +1,8 @@
-# UniMart — Campus Barter Marketplace
+# Trocaê — Campus Barter Marketplace
 
 **English** · [Português (Brasil)](README.pt-BR.md)
 
-UniMart is a desktop application for students to exchange or donate used books,
+Trocaê is a desktop application for students to exchange or donate used books,
 school supplies, and equipment within the Senac community.
 
 ## Team
@@ -16,7 +16,7 @@ school supplies, and equipment within the Senac community.
 ## Problem and solution
 
 Students often need materials that other students no longer use, but offers are
-scattered across informal channels. UniMart provides one place to publish an
+scattered across informal channels. Trocaê provides one place to publish an
 item, search listings, and send a message of interest.
 
 ## Technology
@@ -35,8 +35,15 @@ item, search listings, and send a message of interest.
 - Interest messages for available listings
 - Owner controls to review interests, accept one to reserve the listing, reopen
   a reservation, or complete the listing
+- Listing owners can edit their available listings from **Meus anúncios**
+- Responsive listing grid with accessible active filters and removable filter
+  chips
+- SQLite database backup and restore, with integrity checks before replacement
 
-The database is local to the machine. A shared hosted database is not configured.
+The database is local to the machine. Use **Banco de dados** in the application
+header to create a consistent SQLite snapshot or restore a validated backup.
+The current database is preserved if validation or restoration fails. A shared
+hosted database is not configured.
 AI-powered description generation is deferred; the application does not send
 listing data to an external AI provider.
 

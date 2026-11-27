@@ -10,37 +10,48 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import br.com.unimart.controller.FeiraController;
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.util.DatabaseBackup;
 import br.com.unimart.util.Theme;
 import br.com.unimart.view.components.AnuncioCard;
 import br.com.unimart.view.dialogs.InteresseDialog;
 import br.com.unimart.view.dialogs.LoginCadastroDialog;
 import br.com.unimart.view.dialogs.NovoAnuncioDialog;
-import br.com.unimart.view.dialogs.PerfilDialog;
 import br.com.unimart.view.dialogs.HistoricoAnunciosDialog;
+import br.com.unimart.view.dialogs.PerfilDialog;
 
 /**
  * Janela principal da aplicação (Camada View).
@@ -49,6 +60,7 @@ public class MainFrame extends JFrame {
 
     private static final int GRID_COLUMNS = 3;
     private static final int GRID_GAP = 18;
+    private static final int MIN_CARD_WIDTH = 300;
 
     private final FeiraController controller;
 
@@ -58,6 +70,8 @@ public class MainFrame extends JFrame {
     private JLabel contadorLabel;
     private JPanel gridPanel;
     private JPanel authActionsPanel;
+    private JPanel activeFiltersPanel;
+    private JButton databaseBtn;
     private final Timer buscaTimer = new Timer(300, e -> atualizarGrid());
     private SwingWorker<List<Anuncio>, Void> gridWorker;
 
@@ -170,6 +184,12 @@ public class MainFrame extends JFrame {
             authActionsPanel.add(entrarBtn);
         }
 
+        databaseBtn = Theme.createButton("Banco de dados", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+        databaseBtn.setToolTipText("Criar ou restaurar um backup do banco SQLite");
+        databaseBtn.getAccessibleContext().setAccessibleName("Opções do banco de dados");
+        databaseBtn.addActionListener(e -> abrirOpcoesBanco());
+        authActionsPanel.add(databaseBtn);
+
         JButton novoBtn = Theme.createButton("+ Publicar anúncio", Theme.GREEN, Color.WHITE);
         novoBtn.addActionListener(e -> executarAcaoAutenticada(() ->
                 new NovoAnuncioDialog(this, controller, this::atualizarGrid).setVisible(true)
@@ -231,14 +251,15 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createToolsBar() {
-        JPanel tools = new JPanel(new GridBagLayout());
+        JPanel tools = new JPanel();
+        tools.setLayout(new BoxLayout(tools, BoxLayout.Y_AXIS));
         tools.setBackground(Theme.BG_MAIN);
-        tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 142));
         tools.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weighty = 1.0;
+        JPanel fields = new JPanel(new GridBagLayout());
+        fields.setBackground(Theme.BG_MAIN);
+        fields.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         buscaField = new JTextField();
         buscaField.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -250,9 +271,11 @@ public class MainFrame extends JFrame {
         buscaField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
+                atualizarFiltrosAtivos();
                 agendarAtualizacaoGrid();
             }
         });
+        buscaField.getAccessibleContext().setAccessibleName("Buscar anúncios");
 
         categoriaCombo = new JComboBox<>(new String[]{
                 "Todas as categorias",
@@ -263,7 +286,11 @@ public class MainFrame extends JFrame {
                 "Outros"
         });
         Theme.styleComboBox(categoriaCombo);
-        categoriaCombo.addActionListener(e -> agendarAtualizacaoGrid());
+        categoriaCombo.getAccessibleContext().setAccessibleName("Filtrar por categoria");
+        categoriaCombo.addActionListener(e -> {
+            atualizarFiltrosAtivos();
+            agendarAtualizacaoGrid();
+        });
 
         modalidadeCombo = new JComboBox<>(new String[]{
                 "Trocas e doações",
@@ -271,24 +298,123 @@ public class MainFrame extends JFrame {
                 "Doação"
         });
         Theme.styleComboBox(modalidadeCombo);
-        modalidadeCombo.addActionListener(e -> agendarAtualizacaoGrid());
+        modalidadeCombo.getAccessibleContext().setAccessibleName("Filtrar por modalidade");
+        modalidadeCombo.addActionListener(e -> {
+            atualizarFiltrosAtivos();
+            agendarAtualizacaoGrid();
+        });
 
-        gbc.gridx = 0;
-        gbc.weightx = 1.0;
-        gbc.insets = new Insets(0, 0, 0, 12);
-        tools.add(buscaField, gbc);
+        JButton clearButton = Theme.createButton(
+                "Limpar filtros", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN
+        );
+        clearButton.addActionListener(e -> limparFiltros());
+        clearButton.setToolTipText("Limpar busca, categoria e modalidade");
+        clearButton.getAccessibleContext().setAccessibleName("Limpar todos os filtros");
 
-        gbc.gridx = 1;
-        gbc.weightx = 0.0;
-        categoriaCombo.setPreferredSize(new Dimension(220, 44));
-        tools.add(categoriaCombo, gbc);
+        addFilterField(fields, "Buscar anúncios", buscaField, 0, 1.0, 280);
+        addFilterField(fields, "Categoria", categoriaCombo, 1, 0.0, 190);
+        addFilterField(fields, "Modalidade", modalidadeCombo, 2, 0.0, 170);
+        GridBagConstraints clearConstraints = new GridBagConstraints();
+        clearConstraints.gridx = 3;
+        clearConstraints.gridy = 1;
+        clearConstraints.insets = new Insets(20, 10, 0, 0);
+        clearConstraints.anchor = GridBagConstraints.LINE_END;
+        fields.add(clearButton, clearConstraints);
 
-        gbc.gridx = 2;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        modalidadeCombo.setPreferredSize(new Dimension(190, 44));
-        tools.add(modalidadeCombo, gbc);
+        activeFiltersPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 3));
+        activeFiltersPanel.setBackground(Theme.BG_MAIN);
+        activeFiltersPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        activeFiltersPanel.setVisible(false);
+
+        tools.add(fields);
+        tools.add(activeFiltersPanel);
+        atualizarFiltrosAtivos();
 
         return tools;
+    }
+
+    private void addFilterField(
+            JPanel panel, String labelText, Component field, int column, double weight, int preferredWidth
+    ) {
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font("SansSerif", Font.BOLD, 12));
+        label.setForeground(Theme.TEXT_MAIN);
+        label.setLabelFor(field);
+
+        GridBagConstraints labelConstraints = new GridBagConstraints();
+        labelConstraints.gridx = column;
+        labelConstraints.gridy = 0;
+        labelConstraints.weightx = weight;
+        labelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        labelConstraints.insets = new Insets(0, column == 0 ? 0 : 12, 4, 0);
+        labelConstraints.anchor = GridBagConstraints.LINE_START;
+        panel.add(label, labelConstraints);
+
+        field.setPreferredSize(new Dimension(preferredWidth, 40));
+        GridBagConstraints fieldConstraints = new GridBagConstraints();
+        fieldConstraints.gridx = column;
+        fieldConstraints.gridy = 1;
+        fieldConstraints.weightx = weight;
+        fieldConstraints.fill = GridBagConstraints.HORIZONTAL;
+        fieldConstraints.insets = new Insets(0, column == 0 ? 0 : 12, 0, 0);
+        panel.add(field, fieldConstraints);
+    }
+
+    private void atualizarFiltrosAtivos() {
+        if (activeFiltersPanel == null) {
+            return;
+        }
+        activeFiltersPanel.removeAll();
+        boolean hasFilters = false;
+
+        String termo = buscaField.getText().trim();
+        if (!termo.isEmpty()) {
+            hasFilters = true;
+            activeFiltersPanel.add(criarChipFiltro("Busca: " + termo, () -> {
+                buscaField.setText("");
+                atualizarFiltrosAtivos();
+                agendarAtualizacaoGrid();
+            }));
+        }
+
+        String categoria = (String) categoriaCombo.getSelectedItem();
+        if (categoria != null && !"Todas as categorias".equals(categoria)) {
+            hasFilters = true;
+            activeFiltersPanel.add(criarChipFiltro("Categoria: " + categoria, () ->
+                    categoriaCombo.setSelectedIndex(0)
+            ));
+        }
+
+        String modalidade = (String) modalidadeCombo.getSelectedItem();
+        if (modalidade != null && !"Trocas e doações".equals(modalidade)) {
+            hasFilters = true;
+            activeFiltersPanel.add(criarChipFiltro("Modalidade: " + modalidade, () ->
+                    modalidadeCombo.setSelectedIndex(0)
+            ));
+        }
+
+        activeFiltersPanel.setVisible(hasFilters);
+        activeFiltersPanel.revalidate();
+        activeFiltersPanel.repaint();
+    }
+
+    private JButton criarChipFiltro(String texto, Runnable aoRemover) {
+        String textoVisivel = texto.length() > 38 ? texto.substring(0, 35) + "..." : texto;
+        JButton chip = Theme.createButton(textoVisivel + "  ×", Theme.PALE, Theme.GREEN);
+        chip.setBorder(new EmptyBorder(5, 10, 5, 10));
+        chip.setFont(new Font("SansSerif", Font.BOLD, 11));
+        chip.setToolTipText("Remover filtro: " + texto);
+        chip.getAccessibleContext().setAccessibleDescription("Remover o filtro " + texto);
+        chip.addActionListener(e -> aoRemover.run());
+        return chip;
+    }
+
+    private void limparFiltros() {
+        buscaField.setText("");
+        categoriaCombo.setSelectedIndex(0);
+        modalidadeCombo.setSelectedIndex(0);
+        atualizarFiltrosAtivos();
+        agendarAtualizacaoGrid();
     }
 
     private JPanel createSectionHeader() {
@@ -314,7 +440,33 @@ public class MainFrame extends JFrame {
         gridPanel = new JPanel(new GridLayout(0, GRID_COLUMNS, GRID_GAP, GRID_GAP));
         gridPanel.setBackground(Theme.BG_MAIN);
         gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        gridPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent event) {
+                atualizarColunasGrade();
+            }
+        });
         return gridPanel;
+    }
+
+    private int obterQuantidadeColunas() {
+        int largura = gridPanel.getWidth();
+        if (largura <= 0) {
+            return GRID_COLUMNS;
+        }
+        return Math.max(1, Math.min(GRID_COLUMNS, largura / (MIN_CARD_WIDTH + GRID_GAP)));
+    }
+
+    private void atualizarColunasGrade() {
+        if (!(gridPanel.getLayout() instanceof GridLayout)) {
+            return;
+        }
+        int colunas = obterQuantidadeColunas();
+        GridLayout layout = (GridLayout) gridPanel.getLayout();
+        if (layout.getColumns() != colunas) {
+            gridPanel.setLayout(new GridLayout(0, colunas, GRID_GAP, GRID_GAP));
+            gridPanel.revalidate();
+        }
     }
 
     public void atualizarGrid() {
@@ -322,6 +474,7 @@ public class MainFrame extends JFrame {
         if (gridWorker != null) {
             gridWorker.cancel(true);
         }
+        exibirCarregandoAnuncios();
 
         String termoBusca = buscaField.getText();
         String categoria = (String) categoriaCombo.getSelectedItem();
@@ -360,7 +513,7 @@ public class MainFrame extends JFrame {
         if (anuncios.isEmpty()) {
             exibirEstadoVazio();
         } else {
-            gridPanel.setLayout(new GridLayout(0, GRID_COLUMNS, GRID_GAP, GRID_GAP));
+            gridPanel.setLayout(new GridLayout(0, obterQuantidadeColunas(), GRID_GAP, GRID_GAP));
             for (Anuncio anuncio : anuncios) {
                 gridPanel.add(criarCartaoAnuncio(anuncio));
             }
@@ -371,15 +524,224 @@ public class MainFrame extends JFrame {
     }
 
     private void exibirEstadoVazio() {
-        gridPanel.setLayout(new BorderLayout());
-        JLabel empty = new JLabel(
+        exibirMensagemGrid(
                 "Nenhum anúncio encontrado. Tente mudar os filtros ou publique o primeiro!",
-                JLabel.CENTER
+                "0 itens"
         );
-        empty.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        empty.setForeground(Theme.TEXT_MUTED);
-        empty.setBorder(new EmptyBorder(50, 20, 50, 20));
-        gridPanel.add(empty, BorderLayout.CENTER);
+    }
+
+    private void exibirMensagemGrid(String mensagem) {
+        exibirMensagemGrid(mensagem, contadorLabel.getText());
+    }
+
+    private void exibirMensagemGrid(String mensagem, String contador) {
+        gridPanel.removeAll();
+        gridPanel.setLayout(new BorderLayout());
+        JLabel label = new JLabel(mensagem, JLabel.CENTER);
+        label.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        label.setForeground(Theme.TEXT_MUTED);
+        label.setBorder(new EmptyBorder(50, 20, 50, 20));
+        gridPanel.add(label, BorderLayout.CENTER);
+        contadorLabel.setText(contador);
+        gridPanel.revalidate();
+        gridPanel.repaint();
+    }
+
+    private void exibirCarregandoAnuncios() {
+        gridPanel.removeAll();
+        gridPanel.setLayout(new GridLayout(0, obterQuantidadeColunas(), GRID_GAP, GRID_GAP));
+        for (int i = 0; i < GRID_COLUMNS; i++) {
+            gridPanel.add(criarCardEsqueleto());
+        }
+        contadorLabel.setText("Carregando...");
+        gridPanel.revalidate();
+        gridPanel.repaint();
+    }
+
+    private JPanel criarCardEsqueleto() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(new LineBorder(Theme.BORDER_COLOR, 1, true));
+
+        JPanel imagem = new JPanel();
+        imagem.setBackground(Theme.PALE);
+        imagem.setPreferredSize(new Dimension(300, 140));
+        card.add(imagem, BorderLayout.NORTH);
+
+        JPanel conteudo = new JPanel();
+        conteudo.setLayout(new BoxLayout(conteudo, BoxLayout.Y_AXIS));
+        conteudo.setBackground(Color.WHITE);
+        conteudo.setBorder(new EmptyBorder(18, 18, 18, 18));
+        conteudo.add(blocoEsqueleto(120, 15));
+        conteudo.add(Box.createVerticalStrut(14));
+        conteudo.add(blocoEsqueleto(190, 22));
+        conteudo.add(Box.createVerticalStrut(12));
+        conteudo.add(blocoEsqueleto(250, 12));
+        conteudo.add(Box.createVerticalStrut(7));
+        conteudo.add(blocoEsqueleto(210, 12));
+        card.add(conteudo, BorderLayout.CENTER);
+        card.getAccessibleContext().setAccessibleName("Anúncio carregando");
+        return card;
+    }
+
+    private JPanel blocoEsqueleto(int largura, int altura) {
+        JPanel bloco = new JPanel();
+        bloco.setBackground(Theme.PALE);
+        bloco.setMaximumSize(new Dimension(largura, altura));
+        bloco.setPreferredSize(new Dimension(largura, altura));
+        bloco.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return bloco;
+    }
+
+    private void criarBackupBanco() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Salvar backup do banco de dados");
+        chooser.setFileFilter(new FileNameExtensionFilter("Banco SQLite (*.db)", "db"));
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        chooser.setSelectedFile(new File("trocae-backup-" + timestamp + ".db"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File selectedFile = chooser.getSelectedFile();
+        if (!selectedFile.getName().toLowerCase(Locale.ROOT).endsWith(".db")) {
+            selectedFile = new File(selectedFile.getParentFile(), selectedFile.getName() + ".db");
+        }
+        if (selectedFile.exists()) {
+            int overwrite = JOptionPane.showConfirmDialog(
+                    this,
+                    "O arquivo já existe. Deseja substituí-lo?",
+                    "Confirmar substituição",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+            if (overwrite != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        Path destino = selectedFile.toPath();
+        JButton activeBackupButton = databaseBtn;
+        activeBackupButton.setEnabled(false);
+        activeBackupButton.setText("Preparando backup...");
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                DatabaseBackup.criarBackup(destino);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    JOptionPane.showMessageDialog(
+                            MainFrame.this,
+                            "Backup criado com sucesso:\n" + destino.toAbsolutePath(),
+                            "Trocaê",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    exibirErroBackup(e);
+                } catch (ExecutionException e) {
+                    exibirErroBackup(e.getCause() != null ? e.getCause() : e);
+                } finally {
+                    activeBackupButton.setEnabled(true);
+                    activeBackupButton.setText("Banco de dados");
+                }
+            }
+        }.execute();
+    }
+
+    private void abrirOpcoesBanco() {
+        Object[] opcoes = {"Criar backup", "Restaurar backup", "Cancelar"};
+        int selecao = JOptionPane.showOptionDialog(
+                this,
+                "Escolha uma operação para o banco de dados local.",
+                "Banco de dados",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opcoes,
+                opcoes[0]
+        );
+        if (selecao == 0) {
+            criarBackupBanco();
+        } else if (selecao == 1) {
+            restaurarBackupBanco();
+        }
+    }
+
+    private void restaurarBackupBanco() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Selecionar backup para restauração");
+        chooser.setFileFilter(new FileNameExtensionFilter("Banco SQLite (*.db)", "db"));
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        Path origem = chooser.getSelectedFile().toPath();
+        int confirmacao = JOptionPane.showConfirmDialog(
+                this,
+                "A restauração substituirá os dados atuais pelos dados do arquivo selecionado.\n"
+                        + "O banco atual será preservado automaticamente em caso de falha.\n\n"
+                        + "Deseja continuar?",
+                "Confirmar restauração",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (confirmacao != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        buscaTimer.stop();
+        if (gridWorker != null) {
+            gridWorker.cancel(true);
+        }
+        JButton activeDatabaseButton = databaseBtn;
+        activeDatabaseButton.setEnabled(false);
+        activeDatabaseButton.setText("Restaurando...");
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                DatabaseBackup.restaurarBackup(origem);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    atualizarGrid();
+                    JOptionPane.showMessageDialog(
+                            MainFrame.this,
+                            "Backup restaurado com sucesso.",
+                            "Trocaê",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    exibirErroBackup(e);
+                } catch (ExecutionException e) {
+                    exibirErroBackup(e.getCause() != null ? e.getCause() : e);
+                } finally {
+                    activeDatabaseButton.setEnabled(true);
+                    activeDatabaseButton.setText("Banco de dados");
+                }
+            }
+        }.execute();
+    }
+
+    private void exibirErroBackup(Throwable erro) {
+        JOptionPane.showMessageDialog(
+                this,
+                "Não foi possível concluir a operação do banco de dados: " + erro.getMessage(),
+                "Erro",
+                JOptionPane.ERROR_MESSAGE
+        );
     }
 
     private AnuncioCard criarCartaoAnuncio(Anuncio anuncio) {
@@ -396,6 +758,7 @@ public class MainFrame extends JFrame {
     }
 
     private void exibirErroCarregamento(Throwable erro) {
+        exibirMensagemGrid("Não foi possível carregar os anúncios.", "Erro");
         JOptionPane.showMessageDialog(this,
                 "Erro ao carregar anúncios: " + erro.getMessage(),
                 "Erro", JOptionPane.ERROR_MESSAGE);

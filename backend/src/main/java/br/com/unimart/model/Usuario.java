@@ -1,7 +1,7 @@
 package br.com.unimart.model;
 
 /**
- * Representa um usuário autenticado da comunidade UniMart.
+ * Representa um usuário autenticado da comunidade Trocaê.
  */
 public class Usuario extends EntidadeBase {
 

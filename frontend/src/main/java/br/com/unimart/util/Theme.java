@@ -37,10 +37,11 @@ public final class Theme {
         button.setOpaque(true);
         button.setContentAreaFilled(true);
         button.setBorderPainted(false);
-        button.setFocusPainted(false);
+        button.setFocusPainted(true);
         button.setFont(new Font("SansSerif", Font.BOLD, 13));
         button.setBorder(new EmptyBorder(11, 18, 11, 18));
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.getAccessibleContext().setAccessibleName(text);
         return button;
     }
 
