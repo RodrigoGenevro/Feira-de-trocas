@@ -15,7 +15,7 @@ import br.com.unimart.view.dialogs.LoginCadastroDialog;
 
 /**
  * Ponto de entrada da aplicação desktop Trocaê.
- * Configura o cliente da API, exige autenticação e exibe a View principal.
+ * Configura o modo local ou o cliente da API, exige autenticação e exibe a View principal.
  */
 public class Main {
 
@@ -24,9 +24,13 @@ public class Main {
     public static void main(String[] args) {
         configurarAparenciaNativa();
 
-        FeiraApiClient apiClient;
+        String apiUrl = System.getenv("TROCAE_API_URL");
+        boolean modoLocal = apiUrl == null || apiUrl.isBlank();
+        FeiraController controller;
         try {
-            apiClient = FeiraApiClient.fromEnvironment();
+            controller = modoLocal
+                    ? new FeiraController()
+                    : new FeiraController(new FeiraApiClient(apiUrl));
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(
                     null, e.getMessage(), "Configuração inválida", JOptionPane.ERROR_MESSAGE
@@ -35,7 +39,14 @@ public class Main {
         }
 
         SwingUtilities.invokeLater(() -> {
-            FeiraController controller = new FeiraController(apiClient);
+            if (modoLocal) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "TROCAE_API_URL não configurada. O aplicativo usará o banco SQLite local; "
+                                + "os dados não serão compartilhados com outros dispositivos.",
+                        "Modo local", JOptionPane.INFORMATION_MESSAGE
+                );
+            }
             MainFrame mainFrame = new MainFrame(controller);
 
             LoginCadastroDialog acessoDialog = new LoginCadastroDialog(

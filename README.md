@@ -108,9 +108,14 @@ For local development, configure the API with a development PostgreSQL database,
 start it, and then start the desktop app in another terminal. In production, set
 `TROCAE_API_URL` in each desktop installation to the public HTTPS URL of the API
 (`https://YOUR-SERVER/api`):
+If `TROCAE_API_URL` is unset, the desktop app uses its local SQLite database;
+data stays on that computer and no API server is required. The app displays a
+notice when it starts in this mode. If `TROCAE_API_URL` is set, the app uses that
+API and reports connection failures rather than silently switching databases.
+To launch in local mode, leave the variable unset and run:
 
 ```powershell
-$env:TROCAE_API_URL = "http://localhost:8080/api"
+Remove-Item Env:TROCAE_API_URL -ErrorAction SilentlyContinue
 mvn -pl frontend -am install
 mvn -pl frontend exec:java
 ```
@@ -126,6 +131,19 @@ Review the counts and manually resolve accounts that share an email
 (case-insensitively) but have different profiles or credentials in the SQLite
 copies. The dry run blocks import when it finds conflicts or invalid references.
 Then run the same file list with:
+To use the shared API locally, start it as described above and set this URL
+before launching the desktop app:
+
+```powershell
+$env:TROCAE_API_URL = "http://localhost:8080/api"
+mvn -pl frontend exec:java
+```
+
+In production, set `TROCAE_API_URL` to the public HTTPS URL of the API
+(`https://YOUR-SERVER/api`) before launching.
+
+To import data from an existing SQLite database once, first make a copy of the
+file and use an empty Supabase database:
 
 ```powershell
 mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--apply C:\backups\computer1.db C:\backups\computer2.db"

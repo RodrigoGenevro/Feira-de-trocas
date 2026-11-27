@@ -108,15 +108,34 @@ Para desenvolvimento local, configure a API com um PostgreSQL de desenvolvimento
 inicie-a e, em outro terminal, inicie o app. Em produção, configure
 `TROCAE_API_URL` em cada instalação desktop para a URL HTTPS pública da API
 (`https://SEU-SERVIDOR/api`):
+Se `TROCAE_API_URL` não estiver configurada, o app desktop usa o banco SQLite
+local; os dados ficam apenas nesse computador e não é necessário iniciar uma API.
+O app exibe um aviso ao iniciar nesse modo. Se `TROCAE_API_URL` estiver
+configurada, o app usa essa API e informa falhas de conexão, sem trocar de banco
+silenciosamente. Para iniciar no modo local, deixe a variável sem configuração
+e execute:
 
 ```powershell
-$env:TROCAE_API_URL = "http://localhost:8080/api"
+Remove-Item Env:TROCAE_API_URL -ErrorAction SilentlyContinue
 mvn -pl frontend -am install
 mvn -pl frontend exec:java
 ```
 
 Para consolidar bancos SQLite de várias máquinas, trabalhe com cópias dos
 arquivos e use um banco Supabase vazio. Primeiro execute a simulação:
+Para usar a API compartilhada localmente, inicie-a como
+descrito antes e configure o endereço abaixo antes de abrir o app:
+
+```powershell
+$env:TROCAE_API_URL = "http://localhost:8080/api"
+mvn -pl frontend exec:java
+```
+
+Em produção, configure `TROCAE_API_URL` em cada instalação desktop com a URL
+HTTPS pública da API (`https://SEU-SERVIDOR/api`) antes de iniciar o app.
+
+Para importar uma vez os dados de um SQLite existente, faça primeiro uma cópia
+do arquivo e use um banco Supabase vazio:
 
 ```powershell
 mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--dry-run C:\backups\maquina1.db C:\backups\maquina2.db"
