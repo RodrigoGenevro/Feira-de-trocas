@@ -13,6 +13,30 @@ generated work, and decisions made after reviewing the output.
 
 ## Entries
 
+### November 27, 2026 — Preventing reports on one's own listings
+
+- **Main prompt:** Keep the report option for other users' listings but hide it
+  from the owner's own listings.
+- **What the AI generated:** The frontend omits the report action for owned
+  listings, and the backend rejects self-reports, including legacy listings
+  associated by owner name.
+- **What the team kept:** Both interface and repository-level protections, with
+  regression tests for own and other users' listings.
+- **What the team corrected or rejected, and why:** No moderation workflow or
+  automatic action was added; reports remain records for later review.
+
+### November 27, 2026 — Integrity, cancellation and local assistance
+
+- **Main prompt:** Implement the relevant backend and frontend suggestions
+  without expanding scope beyond the demonstration period.
+- **What the AI generated:** Duplicate-interest prevention, user cancellation,
+  announcement reports, simple natural-language search and local description
+  assistance.
+- **What the team kept:** Generated descriptions remain local and require human
+  review; no text is published automatically.
+- **What the team corrected or rejected, and why:** No external provider is used
+  and no automatic decision or classification is applied.
+
 ### 24/11/2026 — Initial screen design
 
 - **Main prompt:** Use the existing UC4 project as the basis for the new home

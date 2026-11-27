@@ -66,3 +66,20 @@ Este arquivo registra as decisões refletidas na implementação atual.
   hospedada.
 - **Motivo:** Nenhum provedor ou chave de API foi escolhido. Os dados dos
   anúncios não devem ser enviados a um serviço externo sem uma decisão explícita.
+
+## 27/11/2026 — Apoio local à busca e descrição
+
+- **Decisão:** Implementar uma sugestão local de descrição e reconhecimento
+  simples de termos de busca, sem enviar dados a provedores externos.
+- **Motivo:** Mantém o uso de IA transparente e seguro no prazo da imersão,
+  permitindo uma demonstração de assistência sem exigir uma chave de API.
+
+## 27/11/2026 — Integridade de interesses e denúncias
+
+- **Decisão:** Impedir interesses duplicados, permitir cancelamento pelo
+  interessado e permitir uma denúncia por usuário e anúncio somente quando o
+  anúncio pertence a outra pessoa.
+- **Motivo:** Fecha casos importantes de uso, reduz ruído no mural e cria
+  responsabilidades claras para demonstrar interesse ou reportar conteúdo. A
+  interface oculta a ação nos anúncios do próprio usuário e o backend também
+  rejeita denúncias do proprietário.

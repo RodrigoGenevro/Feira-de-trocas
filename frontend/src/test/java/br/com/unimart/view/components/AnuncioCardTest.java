@@ -2,6 +2,7 @@ package br.com.unimart.view.components;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,6 +60,18 @@ class AnuncioCardTest {
 
             assertNotNull(botao);
             assertFalse(botao.isEnabled());
+        });
+    }
+
+    @Test
+    void denunciaNaoApareceQuandoOAnuncioEProprio() throws Exception {
+        Anuncio anuncio = new Anuncio();
+
+        SwingUtilities.invokeAndWait(() -> {
+            AnuncioCard card = new AnuncioCard(anuncio, ignored -> {
+            }, null, false);
+
+            assertNull(localizarBotao(card, "Denunciar"));
         });
     }
 

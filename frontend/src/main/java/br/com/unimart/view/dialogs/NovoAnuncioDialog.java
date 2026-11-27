@@ -12,6 +12,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -89,6 +90,13 @@ public class NovoAnuncioDialog extends BaseDialog {
         JScrollPane descScroll = new JScrollPane(descArea);
         descScroll.setBorder(new LineBorder(Theme.BORDER_COLOR, 1, true));
         descScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JButton sugestaoDesc = Theme.createButton(
+                "Sugerir descrição",
+                new Color(0xEE, 0xF2, 0xF0),
+                Theme.TEXT_MAIN
+        );
+        sugestaoDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sugestaoDesc.setMaximumSize(new Dimension(170, 32));
 
         JComboBox<String> catBox = new JComboBox<>(new String[]{
                 "Livros", "Materiais escolares", "Eletrônicos", "Equipamentos", "Outros"
@@ -131,6 +139,8 @@ public class NovoAnuncioDialog extends BaseDialog {
         formPanel.add(Box.createVerticalStrut(10));
         formPanel.add(criarRotuloCampo("Descrição *", descArea));
         formPanel.add(descScroll);
+        formPanel.add(Box.createVerticalStrut(6));
+        formPanel.add(sugestaoDesc);
         JLabel descricaoCount = new JLabel("0/" + Anuncio.MAX_DESCRICAO_LENGTH);
         descricaoCount.setAlignmentX(Component.LEFT_ALIGNMENT);
         descricaoCount.getAccessibleContext().setAccessibleName("Contagem de caracteres da descrição");
@@ -178,6 +188,34 @@ public class NovoAnuncioDialog extends BaseDialog {
         fotoPreviewLabel.getAccessibleContext().setAccessibleName("Prévia da foto do anúncio");
         formPanel.add(fotoPreviewLabel);
         formPanel.add(Box.createVerticalStrut(18));
+
+        sugestaoDesc.addActionListener(event -> {
+            String titulo = tituloField.getText().trim();
+            if (titulo.isEmpty()) {
+                showWarning("Informe o título do item antes de sugerir uma descrição.");
+                return;
+            }
+            String categoria = String.valueOf(catBox.getSelectedItem());
+            String modalidade = "DOACAO".equals(modBox.getSelectedItem())
+                    ? "doação" : "troca";
+            String sugestao = "Este item está disponível para " + modalidade
+                    + " na comunidade do campus. Categoria: " + categoria
+                    + ". " + titulo + " encontra-se em bom estado de uso; "
+                    + "combine diretamente com o anunciante o encontro no campus.";
+            int resposta = JOptionPane.YES_OPTION;
+            if (!descArea.getText().trim().isEmpty()) {
+                resposta = JOptionPane.showConfirmDialog(
+                        this,
+                        "Substituir a descrição atual pela sugestão local?",
+                        "Sugerir descrição",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE
+                );
+            }
+            if (resposta == JOptionPane.YES_OPTION) {
+                descArea.setText(sugestao);
+            }
+        });
 
         JButton submitBtn = Theme.createButton(textoBotao, Theme.GREEN, Color.WHITE);
         submitBtn.setAlignmentX(Component.LEFT_ALIGNMENT);

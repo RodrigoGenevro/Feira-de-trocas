@@ -16,7 +16,7 @@ public final class DatabaseConfig {
 
     private static final String DB_URL = "jdbc:sqlite:database/feira_trocas.db";
     private static final String DB_FALLBACK_URL = "jdbc:sqlite:../database/feira_trocas.db";
-    private static final int LATEST_SCHEMA_VERSION = 2;
+    private static final int LATEST_SCHEMA_VERSION = 3;
     private static final Logger LOGGER = Logger.getLogger(DatabaseConfig.class.getName());
     private static String activeDbUrl;
 
@@ -229,6 +229,7 @@ public final class DatabaseConfig {
         switch (version) {
             case 1 -> migrarEstruturaBase(connection);
             case 2 -> migrarIntegridadeEPaginacao(connection);
+            case 3 -> migrarInteressesEDenuncias(connection);
             default -> throw new SQLException("Migração de banco de dados desconhecida: " + version);
         }
     }
@@ -348,6 +349,52 @@ public final class DatabaseConfig {
                         SELECT RAISE(ABORT, 'Dados de interesse inválidos.');
                     END
                     """);
+        }
+    }
+
+    private static void migrarInteressesEDenuncias(Connection connection) throws SQLException {
+        garantirColunaUsuarioIdInteresse(connection);
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_interesses_usuario_anuncio "
+                            + "ON interesses(usuario_id, anuncio_id) "
+                            + "WHERE usuario_id IS NOT NULL"
+            );
+            statement.executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS denuncias ("
+                            + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                            + "anuncio_id INTEGER NOT NULL,"
+                            + "usuario_id INTEGER NOT NULL,"
+                            + "motivo TEXT NOT NULL,"
+                            + "detalhes TEXT,"
+                            + "criado_em TEXT DEFAULT CURRENT_TIMESTAMP,"
+                            + "FOREIGN KEY(anuncio_id) REFERENCES anuncios(id),"
+                            + "FOREIGN KEY(usuario_id) REFERENCES usuarios(id)"
+                            + ")"
+            );
+            statement.executeUpdate(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_denuncias_usuario_anuncio "
+                            + "ON denuncias(usuario_id, anuncio_id)"
+            );
+            statement.executeUpdate(
+                    "CREATE INDEX IF NOT EXISTS idx_denuncias_anuncio "
+                            + "ON denuncias(anuncio_id)"
+            );
+        }
+    }
+
+    private static void garantirColunaUsuarioIdInteresse(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             ResultSet columns = statement.executeQuery("PRAGMA table_info(interesses)")) {
+            while (columns.next()) {
+                if ("usuario_id".equals(columns.getString("name"))) {
+                    return;
+                }
+            }
+        }
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate("ALTER TABLE interesses ADD COLUMN usuario_id INTEGER");
         }
     }
 

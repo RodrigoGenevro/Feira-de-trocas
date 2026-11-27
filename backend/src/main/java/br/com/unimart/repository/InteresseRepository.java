@@ -26,26 +26,74 @@ public class InteresseRepository {
     }
 
     public void salvar(Interesse interesse, int usuarioId, String nomeUsuario) throws SQLException {
-        String sql = "INSERT INTO interesses(anuncio_id, nome, mensagem) " +
-                     "SELECT ?, ?, ? WHERE EXISTS (" +
+        String sql = "INSERT INTO interesses(anuncio_id, nome, mensagem, usuario_id, status) " +
+                     "SELECT ?, ?, ?, ?, 'PENDENTE' WHERE EXISTS (" +
                      "SELECT 1 FROM anuncios WHERE id = ? AND status = 'DISPONIVEL' " +
                      "AND NOT ((usuario_id IS NOT NULL AND usuario_id = ?) " +
-                     "OR (usuario_id IS NULL AND lower(nome) = lower(?))))";
+                     "OR (usuario_id IS NULL AND lower(nome) = lower(?)))) "
+                     + "AND NOT EXISTS (SELECT 1 FROM interesses "
+                     + "WHERE anuncio_id = ? AND usuario_id = ?)";
         try (Connection c = abrirConexao();
              PreparedStatement p = c.prepareStatement(sql)) {
 
             p.setInt(1, interesse.getAnuncioId());
             p.setString(2, interesse.getNomeInteressado());
             p.setString(3, interesse.getMensagem());
-            p.setInt(4, interesse.getAnuncioId());
-            p.setInt(5, usuarioId);
-            p.setString(6, nomeUsuario.trim());
+            p.setInt(4, usuarioId);
+            p.setInt(5, interesse.getAnuncioId());
+            p.setInt(6, usuarioId);
+            p.setString(7, nomeUsuario.trim());
+            p.setInt(8, interesse.getAnuncioId());
+            p.setInt(9, usuarioId);
             if (p.executeUpdate() != 1) {
                 throw new IllegalArgumentException(
-                        "Este anúncio não está disponível para interesse ou pertence a você."
+                        "Este anúncio não está disponível, pertence a você ou você já demonstrou interesse."
                 );
             }
         }
+    }
+
+    public void cancelar(int interesseId, int usuarioId) throws SQLException {
+        if (interesseId <= 0 || usuarioId <= 0) {
+            throw new IllegalArgumentException("Dados do interesse inválidos.");
+        }
+        String sql = "UPDATE interesses SET status = 'CANCELADO' "
+                + "WHERE id = ? AND usuario_id = ? AND status = 'PENDENTE'";
+        try (Connection connection = abrirConexao();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, interesseId);
+            statement.setInt(2, usuarioId);
+            if (statement.executeUpdate() != 1) {
+                throw new IllegalStateException(
+                        "O interesse não está pendente ou não pertence a você."
+                );
+            }
+        }
+    }
+
+    public List<Interesse> listarPorUsuario(int usuarioId) throws SQLException {
+        List<Interesse> lista = new ArrayList<>();
+        String sql = "SELECT i.id, i.anuncio_id, i.nome, i.mensagem, i.status, i.criado_em, "
+                + "a.titulo FROM interesses i JOIN anuncios a ON a.id = i.anuncio_id "
+                + "WHERE i.usuario_id = ? ORDER BY i.id DESC";
+        try (Connection connection = abrirConexao();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, usuarioId);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    Interesse interesse = new Interesse();
+                    interesse.setId(result.getInt("id"));
+                    interesse.setAnuncioId(result.getInt("anuncio_id"));
+                    interesse.setNomeInteressado(result.getString("nome"));
+                    interesse.setMensagem(result.getString("mensagem"));
+                    interesse.setStatus(result.getString("status"));
+                    interesse.setCriadoEm(result.getString("criado_em"));
+                    interesse.setTituloAnuncio(result.getString("titulo"));
+                    lista.add(interesse);
+                }
+            }
+        }
+        return lista;
     }
 
     public List<Interesse> listarPorAnuncio(int anuncioId, int usuarioId, String nomeUsuario) throws SQLException {

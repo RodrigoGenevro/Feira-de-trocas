@@ -67,6 +67,7 @@ class ApplicationFlowTest {
                         anuncio_id INTEGER NOT NULL,
                         nome TEXT NOT NULL,
                         mensagem TEXT NOT NULL,
+                        usuario_id INTEGER,
                         status TEXT NOT NULL DEFAULT 'PENDENTE',
                         criado_em TEXT DEFAULT CURRENT_TIMESTAMP
                     )

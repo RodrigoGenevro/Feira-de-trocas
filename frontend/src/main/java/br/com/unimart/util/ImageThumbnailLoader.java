@@ -53,6 +53,12 @@ public final class ImageThumbnailLoader {
                 }
             }
 
+            String contentType = connection.getContentType();
+            if (contentType != null
+                    && !contentType.toLowerCase(java.util.Locale.ROOT).startsWith("image/")) {
+                throw new IOException("O link não retornou uma imagem.");
+            }
+
             long contentLength = connection.getContentLengthLong();
             if (contentLength > MAX_DOWNLOAD_BYTES) {
                 throw new IOException("A imagem excede o tamanho máximo permitido.");

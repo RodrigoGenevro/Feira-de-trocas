@@ -43,6 +43,8 @@ import br.com.unimart.view.dialogs.InteresseDialog;
 import br.com.unimart.view.dialogs.LoginCadastroDialog;
 import br.com.unimart.view.dialogs.NovoAnuncioDialog;
 import br.com.unimart.view.dialogs.HistoricoAnunciosDialog;
+import br.com.unimart.view.dialogs.InteressesUsuarioDialog;
+import br.com.unimart.view.dialogs.DenunciaDialog;
 import br.com.unimart.view.dialogs.PerfilDialog;
 
 /**
@@ -165,6 +167,11 @@ public class MainFrame extends JFrame {
                     new HistoricoAnunciosDialog(this, controller, this::atualizarGrid).setVisible(true)
             );
 
+            JButton interessesBtn = Theme.createButton("Meus interesses", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+            interessesBtn.addActionListener(e ->
+                    new InteressesUsuarioDialog(this, controller).setVisible(true)
+            );
+
             JButton sairBtn = Theme.createButton("Sair", new Color(0xF6, 0xF7, 0xF7), Theme.TEXT_MUTED);
             sairBtn.addActionListener(e -> {
                 controller.logout();
@@ -183,6 +190,7 @@ public class MainFrame extends JFrame {
 
             authActionsPanel.add(perfilBtn);
             authActionsPanel.add(historicoBtn);
+            authActionsPanel.add(interessesBtn);
             authActionsPanel.add(sairBtn);
         } else {
             JButton entrarBtn = Theme.createButton("Entrar / Cadastrar", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
@@ -273,7 +281,7 @@ public class MainFrame extends JFrame {
                 new LineBorder(Theme.BORDER_COLOR, 1, true),
                 new EmptyBorder(10, 12, 10, 12)
         ));
-        buscaField.setToolTipText("Buscar livros, materiais, equipamentos...");
+        buscaField.setToolTipText("Exemplo: procurando livro de banco de dados");
         buscaField.getAccessibleContext().setAccessibleName("Buscar anúncios");
         buscaField.addKeyListener(new KeyAdapter() {
             @Override
@@ -687,6 +695,7 @@ public class MainFrame extends JFrame {
     }
 
     private AnuncioCard criarCartaoAnuncio(Anuncio anuncio) {
+        boolean anuncioProprio = controller.anuncioPertenceAoUsuarioLogado(anuncio);
         return new AnuncioCard(anuncio, anuncioSelecionado -> executarAcaoAutenticada(() -> {
             if (controller.anuncioPertenceAoUsuarioLogado(anuncioSelecionado)) {
                 JOptionPane.showMessageDialog(this,
@@ -695,8 +704,9 @@ public class MainFrame extends JFrame {
                 return;
             }
             new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true);
-        }),
-                !controller.anuncioPertenceAoUsuarioLogado(anuncio));
+        }), anuncioProprio ? null : anuncioSelecionado -> executarAcaoAutenticada(() ->
+                new DenunciaDialog(this, controller, anuncioSelecionado).setVisible(true)
+        ), !anuncioProprio);
     }
 
     private void exibirErroCarregamento(Throwable erro) {

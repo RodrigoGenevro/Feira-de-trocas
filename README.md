@@ -38,10 +38,24 @@ item, search listings, and send a message of interest.
 - Responsive two-row header keeps account and publish actions visible
 - Interest messages for available listings
 - Owner controls to review interests, accept one to reserve the listing, reopen
-  a reservation, or complete the listing
+  a reservation, complete or reactivate the listing
 - Listing owners can edit their available listings from **Meus anúncios**
 - Responsive listing grid with accessible active filters and removable filter
   chips
+- SQLite database backup and restore, with integrity checks before replacement
+  and versioned migrations
+- Users can cancel interests they sent
+- The backend prevents duplicate interests
+- Users can report other users' listings with a reason and details; reporting
+  one's own listing is unavailable
+- Local description suggestions and natural-language search
+- Versioned SQLite migrations, referential integrity checks, and listing-search
+  indexes
+
+The database is local to the machine. Use **Banco de dados** in the application
+header to create a consistent SQLite snapshot or restore a validated backup.
+The current database is preserved if validation or restoration fails. A shared
+hosted database is not configured.
 - HTTP API for authentication, profiles, listings, and interests
 - Versioned PostgreSQL migrations, referential integrity, and search indexes
 - Signed expiring sessions; passwords and database credentials remain on the

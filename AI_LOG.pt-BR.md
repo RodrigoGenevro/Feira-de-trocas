@@ -13,6 +13,30 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
 
 ## Registros
 
+### 27/11/2026 — Bloqueio de denúncias do próprio anúncio
+
+- **Prompt principal:** Manter a opção de denunciar anúncios de outras pessoas,
+  mas ocultá-la nos anúncios do próprio usuário.
+- **O que a IA gerou:** A interface omite a ação nos anúncios próprios e o
+  backend rejeita essas denúncias, inclusive para anúncios antigos associados
+  pelo nome do anunciante.
+- **O que o time aproveitou:** As proteções na interface e no repositório, com
+  testes de regressão para anúncios próprios e de terceiros.
+- **O que o time corrigiu ou rejeitou, e por quê:** Não foi criado um fluxo de
+  moderação nem uma ação automática; as denúncias ficam para análise posterior.
+
+### 27/11/2026 — Integridade, cancelamento e assistência local
+
+- **Prompt principal:** Implementar todas as sugestões relevantes de backend e
+  frontend sem ampliar o escopo além do período de demonstração.
+- **O que a IA gerou:** Prevenção de interesses duplicados, cancelamento de
+  interesses pelo usuário, denúncia de anúncios, busca por linguagem natural
+  simples e sugestão local de descrição.
+- **O que o time aproveitou:** Os fluxos devem ser usados apenas como recursos
+  locais e revisados pela pessoa, sem classificação automática ou envio externo.
+- **O que o time corrigiu ou rejeitou, e por quê:** Nenhuma descrição gerada é
+  publicada automaticamente; o usuário pode revisar ou substituir o texto.
+
 ### 24/11/2026 — Design inicial da tela
 
 - **Prompt principal:** Usar o projeto existente da UC4 como base para a nova

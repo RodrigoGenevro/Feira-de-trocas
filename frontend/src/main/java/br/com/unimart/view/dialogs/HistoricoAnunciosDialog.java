@@ -337,6 +337,19 @@ public class HistoricoAnunciosDialog extends JDialog {
         right.add(Box.createVerticalStrut(5));
         right.add(interessesBtn);
 
+        if (concluido) {
+            JButton reativarBtn = Theme.createButton(
+                    "Reativar anúncio",
+                    new Color(0xDFF1EA),
+                    Theme.GREEN
+            );
+            reativarBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            reativarBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            reativarBtn.addActionListener(e -> reativarAnuncio(anuncio, reativarBtn));
+            right.add(Box.createVerticalStrut(5));
+            right.add(reativarBtn);
+        }
+
         if (!concluido) {
             JButton statusBtn = Theme.createButton(
                     reservado ? "Reabrir anúncio" : "Encerrar anúncio",
@@ -366,6 +379,53 @@ public class HistoricoAnunciosDialog extends JDialog {
         card.add(right, BorderLayout.EAST);
 
         return card;
+    }
+
+    private void reativarAnuncio(Anuncio anuncio, JButton reativarButton) {
+        int resposta = JOptionPane.showConfirmDialog(
+                this,
+                "Deseja reativar o anúncio \"" + anuncio.getTitulo()
+                        + "\" e torná-lo disponível novamente?",
+                "Confirmar reativação",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        if (resposta != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        reativarButton.setEnabled(false);
+        reativarButton.setText("Reativando...");
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws SQLException {
+                controller.reativarAnuncio(anuncio.getId());
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    carregarHistorico();
+                    notificarAnuncioAtualizado();
+                } catch (java.util.concurrent.ExecutionException e) {
+                    Throwable causa = e.getCause() != null ? e.getCause() : e;
+                    JOptionPane.showMessageDialog(
+                            HistoricoAnunciosDialog.this,
+                            "Não foi possível reativar o anúncio: " + causa.getMessage(),
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    reativarButton.setEnabled(true);
+                    reativarButton.setText("Reativar anúncio");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    reativarButton.setEnabled(true);
+                    reativarButton.setText("Reativar anúncio");
+                }
+            }
+        }.execute();
     }
 
     private void atualizarStatusAnuncio(Anuncio anuncio, boolean reabrir, JButton statusButton) {

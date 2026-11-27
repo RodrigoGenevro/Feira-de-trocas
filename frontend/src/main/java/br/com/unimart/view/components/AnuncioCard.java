@@ -53,15 +53,26 @@ public class AnuncioCard extends JPanel {
 
     private final Anuncio anuncio;
     private final Consumer<Anuncio> onInteresseClick;
+    private final Consumer<Anuncio> onDenunciaClick;
     private final boolean permitirInteresse;
 
     public AnuncioCard(Anuncio anuncio, Consumer<Anuncio> onInteresseClick) {
-        this(anuncio, onInteresseClick, true);
+        this(anuncio, onInteresseClick, null, true);
     }
 
     public AnuncioCard(Anuncio anuncio, Consumer<Anuncio> onInteresseClick, boolean permitirInteresse) {
+        this(anuncio, onInteresseClick, null, permitirInteresse);
+    }
+
+    public AnuncioCard(
+            Anuncio anuncio,
+            Consumer<Anuncio> onInteresseClick,
+            Consumer<Anuncio> onDenunciaClick,
+            boolean permitirInteresse
+    ) {
         this.anuncio = anuncio;
         this.onInteresseClick = onInteresseClick;
+        this.onDenunciaClick = onDenunciaClick;
         this.permitirInteresse = permitirInteresse;
         construirCard();
     }
@@ -177,8 +188,26 @@ public class AnuncioCard extends JPanel {
             }
         });
 
+        JPanel actions = new JPanel();
+        actions.setOpaque(false);
+        actions.setLayout(new BoxLayout(actions, BoxLayout.X_AXIS));
+        actions.add(btnInteresse);
+
+        if (onDenunciaClick != null) {
+            JButton denunciar = Theme.createButton(
+                    "Denunciar",
+                    new Color(0xF7E9DE),
+                    new Color(0xA05F38)
+            );
+            denunciar.setFont(new Font("SansSerif", Font.BOLD, 11));
+            denunciar.setToolTipText("Denunciar conteúdo inadequado deste anúncio");
+            denunciar.addActionListener(e -> onDenunciaClick.accept(anuncio));
+            actions.add(Box.createHorizontalStrut(6));
+            actions.add(denunciar);
+        }
+
         foot.add(autorLabel, BorderLayout.CENTER);
-        foot.add(btnInteresse, BorderLayout.EAST);
+        foot.add(actions, BorderLayout.EAST);
 
         body.add(pill);
         body.add(Box.createVerticalStrut(8));
