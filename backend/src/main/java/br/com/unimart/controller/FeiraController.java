@@ -40,6 +40,7 @@ public class FeiraController {
         this.anuncioService = null;
         this.interesseService = null;
         this.authService = null;
+        this.denunciaService = new DenunciaService();
         this.apiClient = apiClient;
     }
 

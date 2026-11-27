@@ -183,8 +183,11 @@ mvn --batch-mode --no-transfer-progress verify
 
 The command runs backend and frontend tests and Checkstyle. SQLite tests continue
 to cover the legacy mode; Supabase connectivity requires external configuration
-and must be validated in the deployment environment. GitHub Actions runs the
-local validation for every pull request and every push to `main`.
+and must be validated in the deployment environment. GitHub Actions runs this
+command on Ubuntu with Temurin JDK 25 for every pull request and every push to
+`main`. The workflow uses `actions/checkout@v7` and `actions/setup-java@v6`,
+with Java compiler problem annotations enabled; see
+[the CI workflow](.github/workflows/ci.yml).
 
 ## Deployment and project links
 
