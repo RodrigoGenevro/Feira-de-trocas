@@ -14,13 +14,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.nio.file.Path;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
@@ -29,23 +24,19 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import br.com.unimart.controller.FeiraController;
 import br.com.unimart.model.Anuncio;
 import br.com.unimart.model.PaginaAnuncios;
-import br.com.unimart.util.DatabaseBackup;
 import br.com.unimart.util.Theme;
 import br.com.unimart.view.components.AnuncioCard;
 import br.com.unimart.view.dialogs.InteresseDialog;
@@ -200,7 +191,7 @@ public class MainFrame extends JFrame {
         }
 
         databaseBtn = Theme.createButton("Banco de dados", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
-        databaseBtn.setToolTipText("Criar ou restaurar um backup do banco SQLite");
+        databaseBtn.setToolTipText("Os dados compartilhados são armazenados no Supabase");
         databaseBtn.getAccessibleContext().setAccessibleName("Opções do banco de dados");
         databaseBtn.addActionListener(e -> abrirOpcoesBanco());
         authActionsPanel.add(databaseBtn);
@@ -685,154 +676,13 @@ public class MainFrame extends JFrame {
         return bloco;
     }
 
-    private void criarBackupBanco() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Salvar backup do banco de dados");
-        chooser.setFileFilter(new FileNameExtensionFilter("Banco SQLite (*.db)", "db"));
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-        chooser.setSelectedFile(new File("trocae-backup-" + timestamp + ".db"));
-        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-
-        File selectedFile = chooser.getSelectedFile();
-        if (!selectedFile.getName().toLowerCase(Locale.ROOT).endsWith(".db")) {
-            selectedFile = new File(selectedFile.getParentFile(), selectedFile.getName() + ".db");
-        }
-        if (selectedFile.exists()) {
-            int overwrite = JOptionPane.showConfirmDialog(
-                    this,
-                    "O arquivo já existe. Deseja substituí-lo?",
-                    "Confirmar substituição",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE
-            );
-            if (overwrite != JOptionPane.YES_OPTION) {
-                return;
-            }
-        }
-
-        Path destino = selectedFile.toPath();
-        JButton activeBackupButton = databaseBtn;
-        activeBackupButton.setEnabled(false);
-        activeBackupButton.setText("Preparando backup...");
-
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                DatabaseBackup.criarBackup(destino);
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                    JOptionPane.showMessageDialog(
-                            MainFrame.this,
-                            "Backup criado com sucesso:\n" + destino.toAbsolutePath(),
-                            "Trocaê",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    exibirErroBackup(e);
-                } catch (ExecutionException e) {
-                    exibirErroBackup(e.getCause() != null ? e.getCause() : e);
-                } finally {
-                    activeBackupButton.setEnabled(true);
-                    activeBackupButton.setText("Banco de dados");
-                }
-            }
-        }.execute();
-    }
-
     private void abrirOpcoesBanco() {
-        Object[] opcoes = {"Criar backup", "Restaurar backup", "Cancelar"};
-        int selecao = JOptionPane.showOptionDialog(
-                this,
-                "Escolha uma operação para o banco de dados local.",
-                "Banco de dados",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                opcoes,
-                opcoes[0]
-        );
-        if (selecao == 0) {
-            criarBackupBanco();
-        } else if (selecao == 1) {
-            restaurarBackupBanco();
-        }
-    }
-
-    private void restaurarBackupBanco() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Selecionar backup para restauração");
-        chooser.setFileFilter(new FileNameExtensionFilter("Banco SQLite (*.db)", "db"));
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-
-        Path origem = chooser.getSelectedFile().toPath();
-        int confirmacao = JOptionPane.showConfirmDialog(
-                this,
-                "A restauração substituirá os dados atuais pelos dados do arquivo selecionado.\n"
-                        + "O banco atual será preservado automaticamente em caso de falha.\n\n"
-                        + "Deseja continuar?",
-                "Confirmar restauração",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-        );
-        if (confirmacao != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        buscaTimer.stop();
-        if (gridWorker != null) {
-            gridWorker.cancel(true);
-        }
-        JButton activeDatabaseButton = databaseBtn;
-        activeDatabaseButton.setEnabled(false);
-        activeDatabaseButton.setText("Restaurando...");
-
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                DatabaseBackup.restaurarBackup(origem);
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                    atualizarGrid();
-                    JOptionPane.showMessageDialog(
-                            MainFrame.this,
-                            "Backup restaurado com sucesso.",
-                            "Trocaê",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    exibirErroBackup(e);
-                } catch (ExecutionException e) {
-                    exibirErroBackup(e.getCause() != null ? e.getCause() : e);
-                } finally {
-                    activeDatabaseButton.setEnabled(true);
-                    activeDatabaseButton.setText("Banco de dados");
-                }
-            }
-        }.execute();
-    }
-
-    private void exibirErroBackup(Throwable erro) {
         JOptionPane.showMessageDialog(
                 this,
-                "Não foi possível concluir a operação do banco de dados: " + erro.getMessage(),
-                "Erro",
-                JOptionPane.ERROR_MESSAGE
+                "Os dados são compartilhados pelo Supabase. Backups e restaurações do banco remoto "
+                        + "devem ser feitos pela configuração do projeto Supabase.",
+                "Banco de dados",
+                JOptionPane.QUESTION_MESSAGE
         );
     }
 

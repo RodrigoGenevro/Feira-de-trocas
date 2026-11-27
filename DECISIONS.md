@@ -27,14 +27,25 @@ This file records the decisions reflected in the current implementation.
 - **Rationale:** Maven keeps both modules integrated while making their
   responsibilities easier to locate.
 
-## 25/11/2026 — Current database implementation
+## 25/11/2026 — Initial database implementation
 
 - **Decision reflected in code:** Use SQLite, with a local database file created
   at runtime.
 - **Alternative considered:** A shared Supabase database.
-- **Rationale and status:** Supabase was recorded as a proposal in an earlier
-  decision log, but no Supabase integration or credentials are present in this
-  implementation. A hosted shared database remains out of scope.
+- **Rationale and status:** This was the initial implementation; it was
+  superseded on 27/11/2026 by the shared database decision below.
+
+## 27/11/2026 — Shared Supabase database
+
+- **Decision:** Keep the Swing desktop client, add a hosted Java API, and use
+  Supabase PostgreSQL as the shared datastore.
+- **Alternative considered:** Connect each desktop installation directly to
+  the remote database.
+- **Rationale:** A centralized API keeps database credentials out of the
+  distributed application and applies authentication and authorization on the
+  server.
+- **Operation:** Configure the JDBC URL, session secret, and public API URL using
+  environment variables; public deployment requires HTTPS.
 
 ## 26/11/2026 — Photo links
 

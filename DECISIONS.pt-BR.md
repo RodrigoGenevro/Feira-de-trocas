@@ -27,15 +27,24 @@ Este arquivo registra as decisões refletidas na implementação atual.
 - **Motivo:** O Maven mantém os módulos integrados e facilita localizar suas
   responsabilidades.
 
-## 25/11/2026 — Implementação atual do banco de dados
+## 25/11/2026 — Primeira implementação do banco de dados
 
 - **Decisão refletida no código:** Usar SQLite, com um arquivo de banco local
   criado durante a execução.
 - **Alternativa considerada:** Um banco Supabase compartilhado.
-- **Motivo e situação:** O Supabase foi registrado como proposta em uma versão
-  anterior das decisões, mas esta implementação não contém integração nem
-  credenciais do Supabase. Um banco hospedado compartilhado permanece fora do
-  escopo.
+- **Motivo e situação:** Esta foi a implementação inicial; a decisão foi
+  substituída em 27/11/2026 pela integração compartilhada descrita abaixo.
+
+## 27/11/2026 — Banco compartilhado no Supabase
+
+- **Decisão:** Manter o cliente desktop Swing, adicionar uma API Java hospedada
+  e usar PostgreSQL no Supabase como armazenamento compartilhado.
+- **Alternativa considerada:** Conectar cada instalação desktop diretamente ao
+  banco remoto.
+- **Motivo:** Uma API centralizada mantém as credenciais do banco fora do
+  aplicativo distribuído e aplica autenticação e autorização no servidor.
+- **Operação:** Configurar URL JDBC, segredo de sessão e URL pública da API por
+  variáveis de ambiente; o deploy público exige HTTPS.
 
 ## 26/11/2026 — Links de fotos
 

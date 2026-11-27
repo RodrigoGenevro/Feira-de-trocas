@@ -58,6 +58,14 @@ public class AuthService {
         return usuario;
     }
 
+    public Usuario buscarUsuarioPorId(int id) throws SQLException {
+        Usuario usuario = usuarioRepository.buscarPorId(id);
+        if (usuario == null) {
+            throw new IllegalStateException("A conta não está mais ativa.");
+        }
+        return usuario;
+    }
+
     public Usuario atualizarPerfil(Usuario usuarioAtual, String novoNome, String novoEmail,
                                    String novaTurma, String novaSenha, String confirmarNovaSenha) throws SQLException {
         if (usuarioAtual == null || usuarioAtual.getId() == null) {

@@ -87,6 +87,18 @@ public class UsuarioRepository {
         return null;
     }
 
+    public Usuario buscarPorId(int id) throws SQLException {
+        String sql = "SELECT id, nome, email, turma, senha_hash, salt, status, criado_em " +
+                     "FROM usuarios WHERE id = ? AND status = 'ATIVO' LIMIT 1";
+        try (Connection conn = abrirConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? mapearUsuario(rs) : null;
+            }
+        }
+    }
+
     public boolean existePorEmailEmOutroUsuario(String email, Integer idAtual) throws SQLException {
         if (email == null || email.isBlank()) {
             return false;
