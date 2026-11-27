@@ -1,6 +1,7 @@
 package br.com.unimart.service;
 
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.model.PaginaAnuncios;
 import br.com.unimart.repository.AnuncioRepository;
 
 import java.sql.SQLException;
@@ -22,6 +23,28 @@ public class AnuncioService {
     }
 
     public List<Anuncio> listarAnuncios(String termoBusca, String categoriaSelecionada, String modalidadeSelecionada) throws SQLException {
+        String[] filtros = normalizarFiltros(categoriaSelecionada, modalidadeSelecionada);
+        return repository.buscarDisponiveis(termoBusca, filtros[0], filtros[1]);
+    }
+
+    public PaginaAnuncios listarPaginaAnuncios(
+            String termoBusca, String categoriaSelecionada, String modalidadeSelecionada,
+            String ordenacao, int pagina, int tamanhoPagina
+    ) throws SQLException {
+        if (pagina < 0 || tamanhoPagina < 1 || tamanhoPagina > 100) {
+            throw new IllegalArgumentException("Os parâmetros de paginação são inválidos.");
+        }
+        String[] filtros = normalizarFiltros(categoriaSelecionada, modalidadeSelecionada);
+        long deslocamento = (long) pagina * tamanhoPagina;
+        if (deslocamento > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("O número da página excede o limite permitido.");
+        }
+        return repository.buscarPaginaDisponiveis(
+                termoBusca, filtros[0], filtros[1], ordenacao, tamanhoPagina, (int) deslocamento
+        );
+    }
+
+    private String[] normalizarFiltros(String categoriaSelecionada, String modalidadeSelecionada) {
         String cat = (categoriaSelecionada == null || categoriaSelecionada.equals("Todas as categorias"))
                 ? "" : categoriaSelecionada;
 
@@ -31,8 +54,7 @@ public class AnuncioService {
         } else if ("Doação".equals(modalidadeSelecionada)) {
             mod = "DOACAO";
         }
-
-        return repository.buscarDisponiveis(termoBusca, cat, mod);
+        return new String[]{cat, mod};
     }
 
     public Anuncio publicarAnuncio(Anuncio anuncio) throws SQLException {

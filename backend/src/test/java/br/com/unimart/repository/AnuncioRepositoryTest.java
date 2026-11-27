@@ -46,7 +46,8 @@ class AnuncioRepositoryTest {
                         turma TEXT,
                         foto TEXT,
                         usuario_id INTEGER,
-                        status TEXT NOT NULL
+                        status TEXT NOT NULL,
+                        criado_em TEXT DEFAULT CURRENT_TIMESTAMP
                     )
                     """);
             statement.executeUpdate("""
@@ -176,6 +177,37 @@ class AnuncioRepositoryTest {
     }
 
     @Test
+    void paginaResultadosRespeitaOrdenacaoFiltrosELimites() throws SQLException {
+        inserirAnuncio(1, "Caderno", 10, "Ana", "DISPONIVEL");
+        inserirAnuncio(2, "Algebra", 10, "Ana", "DISPONIVEL");
+        inserirAnuncio(3, "Biologia", 10, "Ana", "DISPONIVEL");
+        atualizarCategoriaEModalidade(1, "Livros", "TROCA");
+        atualizarCategoriaEModalidade(2, "Eletrônicos", "DOACAO");
+        atualizarCategoriaEModalidade(3, "Livros", "TROCA");
+
+        var primeiraPagina = anuncioRepository.buscarPaginaDisponiveis(
+                "", "", "", "TITULO_ASC", 2, 0
+        );
+        var segundaPagina = anuncioRepository.buscarPaginaDisponiveis(
+                "", "", "", "TITULO_ASC", 2, 2
+        );
+
+        assertEquals(3, primeiraPagina.total());
+        assertEquals(2, primeiraPagina.anuncios().size());
+        assertEquals("Algebra", primeiraPagina.anuncios().get(0).getTitulo());
+        assertEquals("Biologia", primeiraPagina.anuncios().get(1).getTitulo());
+        assertEquals(3, segundaPagina.total());
+        assertEquals(1, segundaPagina.anuncios().size());
+        assertEquals("Caderno", segundaPagina.anuncios().get(0).getTitulo());
+
+        var filtrada = anuncioRepository.buscarPaginaDisponiveis(
+                "bio", "Livros", "TROCA", "RECENTES", 10, 0
+        );
+        assertEquals(1, filtrada.total());
+        assertEquals("Biologia", filtrada.anuncios().get(0).getTitulo());
+    }
+
+    @Test
     void anuncioSemUsuarioVinculadoBloqueiaInteresseDoMesmoNome() throws SQLException {
         inserirAnuncio(1, "Livro", null, "Ana", "DISPONIVEL");
 
@@ -217,6 +249,19 @@ class AnuncioRepositoryTest {
             statement.setString(3, nome);
             statement.setString(4, mensagem);
             statement.setString(5, status);
+            statement.executeUpdate();
+        }
+    }
+
+    private void atualizarCategoriaEModalidade(int anuncioId, String categoria, String modalidade)
+            throws SQLException {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE anuncios SET categoria = ?, modalidade = ? WHERE id = ?"
+             )) {
+            statement.setString(1, categoria);
+            statement.setString(2, modalidade);
+            statement.setInt(3, anuncioId);
             statement.executeUpdate();
         }
     }

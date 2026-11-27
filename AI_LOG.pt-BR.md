@@ -111,6 +111,24 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
 - **O que o time corrigiu ou rejeitou, e por quê:** A edição foi limitada a
   anúncios disponíveis para não alterar reservas em andamento nem o histórico
   de anúncios concluídos. Foram adicionados testes direcionados ao repositório.
+
+### 26/11/2026 — Busca de anúncios e integridade do banco
+
+- **Prompt principal:** Implementar as melhorias sugeridas de frontend e
+  backend, incluindo prévia de foto, validação do formulário, ordenação,
+  acessibilidade, migrações versionadas do SQLite, paginação, integridade e
+  testes direcionados.
+- **O que a IA gerou:** Adicionou prévias assíncronas com limites de download,
+  validação de campos e contagem de caracteres, resultados paginados e
+  ordenáveis, melhorias de teclado e contraste, migrações versionadas,
+  conexões com chaves estrangeiras, gatilhos de integridade, índices e
+  cabeçalho em duas linhas para manter visível a ação de publicação.
+- **O que o time aproveitou:** A arquitetura desktop e SQLite local existente,
+  migração retrocompatível do banco legado e testes com bancos temporários.
+- **O que o time corrigiu ou rejeitou, e por quê:** Os downloads das prévias
+  têm limites de tempo, tamanho e dimensões. Os 23 testes descobertos pelo VS
+  Code passaram. O Maven não está disponível no PATH, então não foi possível
+  executar o build Maven.
 ### 26/11/2026 — Correção da cor do botão “Seu anúncio”
 
 - **Prompt principal:** Quando o anúncio é meu, a cor do botão fica estranha;

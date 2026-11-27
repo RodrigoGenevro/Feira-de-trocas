@@ -44,6 +44,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import br.com.unimart.controller.FeiraController;
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.model.PaginaAnuncios;
 import br.com.unimart.util.DatabaseBackup;
 import br.com.unimart.util.Theme;
 import br.com.unimart.view.components.AnuncioCard;
@@ -61,19 +62,25 @@ public class MainFrame extends JFrame {
     private static final int GRID_COLUMNS = 3;
     private static final int GRID_GAP = 18;
     private static final int MIN_CARD_WIDTH = 300;
+    private static final int PAGE_SIZE = 12;
 
     private final FeiraController controller;
 
     private JTextField buscaField;
     private JComboBox<String> categoriaCombo;
     private JComboBox<String> modalidadeCombo;
+    private JComboBox<String> ordenacaoCombo;
     private JLabel contadorLabel;
+    private JLabel paginaLabel;
     private JPanel gridPanel;
     private JPanel authActionsPanel;
     private JPanel activeFiltersPanel;
+    private JButton paginaAnteriorBtn;
+    private JButton proximaPaginaBtn;
     private JButton databaseBtn;
+    private int paginaAtual;
     private final Timer buscaTimer = new Timer(300, e -> atualizarGrid());
-    private SwingWorker<List<Anuncio>, Void> gridWorker;
+    private SwingWorker<PaginaAnuncios, Void> gridWorker;
 
     public MainFrame(FeiraController controller) {
         this.controller = controller;
@@ -109,6 +116,8 @@ public class MainFrame extends JFrame {
         mainContent.add(createSectionHeader());
         mainContent.add(Box.createVerticalStrut(14));
         mainContent.add(createGridContainer());
+        mainContent.add(Box.createVerticalStrut(12));
+        mainContent.add(createPaginationControls());
 
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
@@ -118,7 +127,8 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createHeader() {
-        JPanel header = new JPanel(new BorderLayout(20, 0));
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBackground(Color.WHITE);
         header.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE5, 0xEB, 0xE8)),
@@ -127,6 +137,8 @@ public class MainFrame extends JFrame {
 
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
         leftPanel.setBackground(Color.WHITE);
+        leftPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
 
         JLabel brand = new JLabel("\u267B Trocaê");
         brand.setFont(new Font("SansSerif", Font.BOLD, 24));
@@ -141,9 +153,12 @@ public class MainFrame extends JFrame {
 
         authActionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         authActionsPanel.setBackground(Color.WHITE);
+        authActionsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        authActionsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
 
-        header.add(leftPanel, BorderLayout.WEST);
-        header.add(authActionsPanel, BorderLayout.EAST);
+        header.add(leftPanel);
+        header.add(Box.createVerticalStrut(12));
+        header.add(authActionsPanel);
         return header;
     }
 
@@ -254,7 +269,7 @@ public class MainFrame extends JFrame {
         JPanel tools = new JPanel();
         tools.setLayout(new BoxLayout(tools, BoxLayout.Y_AXIS));
         tools.setBackground(Theme.BG_MAIN);
-        tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 142));
+        tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
         tools.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel fields = new JPanel(new GridBagLayout());
@@ -268,6 +283,7 @@ public class MainFrame extends JFrame {
                 new EmptyBorder(10, 12, 10, 12)
         ));
         buscaField.setToolTipText("Buscar livros, materiais, equipamentos...");
+        buscaField.getAccessibleContext().setAccessibleName("Buscar anúncios");
         buscaField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -275,8 +291,6 @@ public class MainFrame extends JFrame {
                 agendarAtualizacaoGrid();
             }
         });
-        buscaField.getAccessibleContext().setAccessibleName("Buscar anúncios");
-
         categoriaCombo = new JComboBox<>(new String[]{
                 "Todas as categorias",
                 "Livros",
@@ -304,22 +318,35 @@ public class MainFrame extends JFrame {
             agendarAtualizacaoGrid();
         });
 
+        ordenacaoCombo = new JComboBox<>(new String[]{
+                "Mais recentes", "Título (A–Z)", "Título (Z–A)"
+        });
+        Theme.styleComboBox(ordenacaoCombo);
+        ordenacaoCombo.setPreferredSize(new Dimension(180, 40));
+        ordenacaoCombo.getAccessibleContext().setAccessibleName("Ordenar anúncios");
+        ordenacaoCombo.addActionListener(e -> agendarAtualizacaoGrid());
+
         JButton clearButton = Theme.createButton(
                 "Limpar filtros", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN
         );
         clearButton.addActionListener(e -> limparFiltros());
-        clearButton.setToolTipText("Limpar busca, categoria e modalidade");
-        clearButton.getAccessibleContext().setAccessibleName("Limpar todos os filtros");
+        clearButton.setToolTipText("Limpar busca, categoria, modalidade e ordenação");
+        clearButton.getAccessibleContext().setAccessibleName("Limpar filtros e ordenação");
 
         addFilterField(fields, "Buscar anúncios", buscaField, 0, 1.0, 280);
         addFilterField(fields, "Categoria", categoriaCombo, 1, 0.0, 190);
         addFilterField(fields, "Modalidade", modalidadeCombo, 2, 0.0, 170);
-        GridBagConstraints clearConstraints = new GridBagConstraints();
-        clearConstraints.gridx = 3;
-        clearConstraints.gridy = 1;
-        clearConstraints.insets = new Insets(20, 10, 0, 0);
-        clearConstraints.anchor = GridBagConstraints.LINE_END;
-        fields.add(clearButton, clearConstraints);
+
+        JPanel sortControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        sortControls.setBackground(Theme.BG_MAIN);
+        sortControls.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel sortLabel = new JLabel("Ordenar por");
+        sortLabel.setLabelFor(ordenacaoCombo);
+        sortLabel.setForeground(Theme.TEXT_MAIN);
+        sortLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        sortControls.add(sortLabel);
+        sortControls.add(ordenacaoCombo);
+        sortControls.add(clearButton);
 
         activeFiltersPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 3));
         activeFiltersPanel.setBackground(Theme.BG_MAIN);
@@ -327,6 +354,7 @@ public class MainFrame extends JFrame {
         activeFiltersPanel.setVisible(false);
 
         tools.add(fields);
+        tools.add(sortControls);
         tools.add(activeFiltersPanel);
         atualizarFiltrosAtivos();
 
@@ -413,6 +441,7 @@ public class MainFrame extends JFrame {
         buscaField.setText("");
         categoriaCombo.setSelectedIndex(0);
         modalidadeCombo.setSelectedIndex(0);
+        ordenacaoCombo.setSelectedIndex(0);
         atualizarFiltrosAtivos();
         agendarAtualizacaoGrid();
     }
@@ -449,6 +478,41 @@ public class MainFrame extends JFrame {
         return gridPanel;
     }
 
+    private JPanel createPaginationControls() {
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 8));
+        controls.setBackground(Theme.BG_MAIN);
+        controls.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        paginaAnteriorBtn = Theme.createButton("Anterior", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+        paginaAnteriorBtn.getAccessibleContext().setAccessibleName("Mostrar página anterior");
+        paginaAnteriorBtn.setEnabled(false);
+        paginaAnteriorBtn.addActionListener(e -> {
+            if (paginaAtual > 0) {
+                paginaAtual--;
+                carregarPaginaAtual();
+            }
+        });
+
+        paginaLabel = new JLabel("Página 1");
+        paginaLabel.setForeground(Theme.TEXT_MUTED);
+        paginaLabel.getAccessibleContext().setAccessibleName("Página atual dos anúncios");
+
+        proximaPaginaBtn = Theme.createButton("Próxima", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
+        proximaPaginaBtn.getAccessibleContext().setAccessibleName("Mostrar próxima página");
+        proximaPaginaBtn.setEnabled(false);
+        proximaPaginaBtn.addActionListener(e -> {
+            if (proximaPaginaBtn.isEnabled()) {
+                paginaAtual++;
+                carregarPaginaAtual();
+            }
+        });
+
+        controls.add(paginaAnteriorBtn);
+        controls.add(paginaLabel);
+        controls.add(proximaPaginaBtn);
+        return controls;
+    }
+
     private int obterQuantidadeColunas() {
         int largura = gridPanel.getWidth();
         if (largura <= 0) {
@@ -470,6 +534,11 @@ public class MainFrame extends JFrame {
     }
 
     public void atualizarGrid() {
+        paginaAtual = 0;
+        carregarPaginaAtual();
+    }
+
+    private void carregarPaginaAtual() {
         buscaTimer.stop();
         if (gridWorker != null) {
             gridWorker.cancel(true);
@@ -479,11 +548,19 @@ public class MainFrame extends JFrame {
         String termoBusca = buscaField.getText();
         String categoria = (String) categoriaCombo.getSelectedItem();
         String modalidade = (String) modalidadeCombo.getSelectedItem();
+        int paginaSolicitada = paginaAtual;
+        String ordenacao = switch (ordenacaoCombo.getSelectedIndex()) {
+            case 1 -> "TITULO_ASC";
+            case 2 -> "TITULO_DESC";
+            default -> "RECENTES";
+        };
 
-        gridWorker = new SwingWorker<List<Anuncio>, Void>() {
+        gridWorker = new SwingWorker<PaginaAnuncios, Void>() {
             @Override
-            protected List<Anuncio> doInBackground() throws SQLException {
-                return controller.buscarAnuncios(termoBusca, categoria, modalidade);
+            protected PaginaAnuncios doInBackground() throws SQLException {
+                return controller.buscarPaginaAnuncios(
+                        termoBusca, categoria, modalidade, ordenacao, paginaSolicitada, PAGE_SIZE
+                );
             }
 
             @Override
@@ -506,9 +583,10 @@ public class MainFrame extends JFrame {
         gridWorker.execute();
     }
 
-    private void exibirAnuncios(List<Anuncio> anuncios) {
+    private void exibirAnuncios(PaginaAnuncios pagina) {
+        List<Anuncio> anuncios = pagina.anuncios();
         gridPanel.removeAll();
-        contadorLabel.setText(anuncios.size() + (anuncios.size() == 1 ? " item" : " itens"));
+        contadorLabel.setText(pagina.total() + (pagina.total() == 1 ? " item" : " itens"));
 
         if (anuncios.isEmpty()) {
             exibirEstadoVazio();
@@ -518,9 +596,19 @@ public class MainFrame extends JFrame {
                 gridPanel.add(criarCartaoAnuncio(anuncio));
             }
         }
+        atualizarControlesPagina(pagina.total(), anuncios.size());
 
         gridPanel.revalidate();
         gridPanel.repaint();
+    }
+
+    private void atualizarControlesPagina(int total, int itensNaPagina) {
+        int totalPaginas = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
+        String textoPagina = "Página " + (paginaAtual + 1) + " de " + totalPaginas;
+        paginaLabel.setText(textoPagina);
+        paginaLabel.getAccessibleContext().setAccessibleDescription(textoPagina);
+        paginaAnteriorBtn.setEnabled(paginaAtual > 0);
+        proximaPaginaBtn.setEnabled((long) (paginaAtual + 1) * PAGE_SIZE < total && itensNaPagina > 0);
     }
 
     private void exibirEstadoVazio() {
@@ -550,10 +638,14 @@ public class MainFrame extends JFrame {
     private void exibirCarregandoAnuncios() {
         gridPanel.removeAll();
         gridPanel.setLayout(new GridLayout(0, obterQuantidadeColunas(), GRID_GAP, GRID_GAP));
-        for (int i = 0; i < GRID_COLUMNS; i++) {
+        int skeletonCount = Math.max(1, obterQuantidadeColunas());
+        for (int i = 0; i < skeletonCount; i++) {
             gridPanel.add(criarCardEsqueleto());
         }
         contadorLabel.setText("Carregando...");
+        paginaLabel.setText("Carregando...");
+        paginaAnteriorBtn.setEnabled(false);
+        proximaPaginaBtn.setEnabled(false);
         gridPanel.revalidate();
         gridPanel.repaint();
     }
@@ -759,12 +851,16 @@ public class MainFrame extends JFrame {
 
     private void exibirErroCarregamento(Throwable erro) {
         exibirMensagemGrid("Não foi possível carregar os anúncios.", "Erro");
+        paginaLabel.setText("Não foi possível carregar");
+        paginaAnteriorBtn.setEnabled(false);
+        proximaPaginaBtn.setEnabled(false);
         JOptionPane.showMessageDialog(this,
                 "Erro ao carregar anúncios: " + erro.getMessage(),
                 "Erro", JOptionPane.ERROR_MESSAGE);
     }
 
     private void agendarAtualizacaoGrid() {
+        paginaAtual = 0;
         buscaTimer.restart();
     }
 }

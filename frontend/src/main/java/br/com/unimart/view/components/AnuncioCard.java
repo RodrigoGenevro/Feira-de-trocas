@@ -11,8 +11,6 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.Image;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -33,6 +31,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.util.ImageThumbnailLoader;
 import br.com.unimart.util.Theme;
 
 /**
@@ -208,19 +207,7 @@ public class AnuncioCard extends JPanel {
             @Override
             protected ImageIcon doInBackground() {
                 try {
-                    URL url = URI.create(urlStr).toURL();
-                    ImageIcon raw = new ImageIcon(url);
-
-                    if (raw.getIconWidth() > 0) {
-                        Image scaled = raw.getImage().getScaledInstance(
-                                IMAGE_WIDTH,
-                                IMAGE_HEIGHT,
-                                Image.SCALE_SMOOTH
-                        );
-
-                        return new ImageIcon(scaled);
-                    }
-
+                    return ImageThumbnailLoader.load(urlStr, IMAGE_WIDTH, IMAGE_HEIGHT);
                 } catch (IOException | IllegalArgumentException e) {
                     LOGGER.log(Level.FINE, "Não foi possível carregar a imagem do anúncio: " + urlStr, e);
                 }
@@ -239,6 +226,9 @@ public class AnuncioCard extends JPanel {
                         }
                         targetLabel.setText("");
                         targetLabel.setIcon(icon);
+                    } else {
+                        targetLabel.setText("Prévia indisponível");
+                        targetLabel.setToolTipText("Não foi possível carregar a imagem deste anúncio.");
                     }
 
                 } catch (InterruptedException e) {

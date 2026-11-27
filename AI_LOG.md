@@ -105,6 +105,24 @@ generated work, and decisions made after reviewing the output.
 - **What the team corrected or rejected, and why:** All 12 tests discovered by
   VS Code passed. The Maven `verify`/Checkstyle task was not run because the
   Java build tool could not start with the configured model.
+
+### 26/11/2026 — Listing discovery and database integrity
+
+- **Main prompt:** Implement the suggested frontend and backend improvements,
+  including photo preview, form validation, sorting, accessibility,
+  versioned SQLite migrations, pagination, integrity checks, and focused tests.
+- **What the AI generated:** Added bounded asynchronous photo previews, field
+  validation and character counts, sortable paginated results, stronger
+  keyboard and text contrast, versioned schema migrations, foreign-key
+  connection settings, integrity triggers, indexes, and a two-row header layout
+  that keeps the publish action visible.
+- **What the team kept:** Existing desktop and local SQLite architecture,
+  backward-compatible migration of legacy databases, and test fixtures using
+  temporary databases.
+- **What the team corrected or rejected, and why:** Preview downloads are
+  bounded by time, byte size, and image dimensions. Maven was unavailable on
+  PATH; all 23 discovered VS Code tests passed, while the Maven build could not
+  be run.
 ### 26/11/2026 — Fixing the “Seu anúncio” button color
 
 - **Main prompt:** When the listing is mine, the button color looks odd; make it

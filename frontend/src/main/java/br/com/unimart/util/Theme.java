@@ -23,7 +23,7 @@ public final class Theme {
     public static final Color INTRO_BG = new Color(0xDF, 0xF1, 0xEB);
     public static final Color BG_MAIN = new Color(0xF6, 0xF8, 0xF7);
     public static final Color TEXT_MAIN = new Color(0x20, 0x33, 0x31);
-    public static final Color TEXT_MUTED = new Color(0x71, 0x81, 0x7E);
+    public static final Color TEXT_MUTED = new Color(0x5F, 0x6F, 0x6B);
     public static final Color BORDER_COLOR = new Color(0xD9, 0xE2, 0xDF);
 
     private Theme() {
@@ -38,6 +38,7 @@ public final class Theme {
         button.setContentAreaFilled(true);
         button.setBorderPainted(false);
         button.setFocusPainted(true);
+        button.setFocusable(true);
         button.setFont(new Font("SansSerif", Font.BOLD, 13));
         button.setBorder(new EmptyBorder(11, 18, 11, 18));
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

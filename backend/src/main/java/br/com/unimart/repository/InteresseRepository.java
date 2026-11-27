@@ -1,7 +1,6 @@
 package br.com.unimart.repository;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -81,6 +80,6 @@ public class InteresseRepository {
     }
 
     private Connection abrirConexao() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl);
+        return DatabaseConfig.getConnection(jdbcUrl);
     }
 }
