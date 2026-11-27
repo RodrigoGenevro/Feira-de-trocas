@@ -142,3 +142,18 @@ representativos, o conteúdo gerado e as decisões tomadas após a revisão.
   explicativo.
 - **O que o time corrigiu ou rejeitou, e por quê:** Nada; a compilação com
   `javac` (incluindo os models do backend) passou sem erros.
+
+### 27/11/2026 — Banco compartilhado no Supabase e deploy no Render
+
+- **Prompt principal:** Preparar o projeto para usar um banco Supabase
+  compartilhado e documentar o deploy da API no Render.
+- **O que a IA gerou:** Uma API Java HTTP com PostgreSQL, integração do cliente
+  desktop, suporte à migração do banco, configuração de deploy no Render e
+  documentação de configuração.
+- **O que o time aproveitou:** As alterações estão na branch
+  `feature/supabase-render-deployment` e em seu pull request.
+- **O que o time corrigiu ou rejeitou, e por quê:** O passo de build, testes e
+  lint do GitHub Actions falhou. A verificação Maven local identificou um
+  import não utilizado no frontend; o pipeline completo precisa passar antes
+  do merge. A conexão com um deploy real no Supabase/Render não foi verificada
+  como parte dessa alteração.

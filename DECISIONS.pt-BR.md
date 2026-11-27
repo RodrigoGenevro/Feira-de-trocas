@@ -46,14 +46,18 @@ Este arquivo registra as decisões refletidas na implementação atual.
 - **Operação:** Configurar URL JDBC, segredo de sessão e URL pública da API por
   variáveis de ambiente; o deploy público exige HTTPS.
 
-## 26/11/2026 — Links de fotos
+## 26/11/2026 — Links de fotos e requisito do briefing
 
-- **Decisão:** A foto é opcional. Quando informada, deve usar um link público
-  HTTP(S); arquivos de imagem não são enviados.
+- **Implementação atual:** O link da foto é opcional. Quando informado, deve
+  usar HTTP(S); arquivos de imagem não são enviados.
+- **Requisito do briefing:** O fluxo mínimo de publicação exige uma foto.
+- **Situação de conformidade:** O comportamento atual, que permite anúncio sem
+  foto, não atende a esse requisito. A implementação e esta decisão precisam
+  ser revisadas antes de declarar conformidade integral com o briefing.
 - **Alternativa considerada:** Armazenar arquivos de imagem junto ao anúncio.
-- **Motivo:** A aplicação atual exibe imagens a partir de URLs e não possui um
-  serviço de armazenamento de imagens. Manter a foto opcional permite publicar
-  mesmo sem um link de imagem.
+- **Motivo do comportamento atual:** A aplicação exibe imagens a partir de URLs
+  e não possui um serviço de armazenamento de imagens. Este registro descreve
+  o comportamento existente; não dispensa o requisito do briefing.
 
 ## 26/11/2026 — Descrições de anúncios com IA
 

@@ -132,16 +132,20 @@ configure a API com HTTPS antes de disponibilizá-la publicamente.
    `jdbc:postgresql://HOST_DO_POOLER:5432/postgres?user=USUARIO_DO_POOLER&password=SENHA_CODIFICADA&sslmode=require`;
    use os valores exatos do painel. O Session pooler é compatível com IPv4 e
    conexões persistentes; não use o Transaction pooler para esta API.
-2. Na raiz do repositório, confira as alterações antes de enviá-las:
+2. Na raiz do repositório, crie uma branch de trabalho, confira as alterações e
+   envie essa branch (use um nome único):
 
    ```powershell
+   git switch -c feature/my-change
    git status
    git add Dockerfile .dockerignore render.yaml README.md README.pt-BR.md backend frontend DECISIONS.md DECISIONS.pt-BR.md
-   git commit -m "Prepare deployment via Render and Supabase"
-   git push origin main
+   git commit -m "feat: prepare deployment via Render and Supabase"
+   git push -u origin feature/my-change
    ```
 
-   Não inclua arquivos `.env`, senhas ou URLs com credenciais no commit.
+   Abra um pull request com destino a `main`; aguarde a revisão e o CI verde
+   antes de mesclar. Não envie commits diretamente para `main`. Não inclua
+   arquivos `.env`, senhas ou URLs com credenciais no commit.
 3. No Render, escolha **New → Blueprint**, conecte o repositório GitHub e
    selecione a branch `main`. O Render lê `render.yaml`, pede
    `TROCAE_DATABASE_URL` e gera `TROCAE_AUTH_SECRET`. Não defina `PORT`; o Render
@@ -153,8 +157,10 @@ configure a API com HTTPS antes de disponibilizá-la publicamente.
    devem usar exatamente a mesma URL.
 
 O plano gratuito do Render pode suspender a API quando está ociosa; a primeira
-requisição após a suspensão pode demorar. Esta configuração inicia um banco
-Supabase vazio e não importa os arquivos SQLite locais.
+requisição após a suspensão pode demorar. O cliente desktop tem timeout atual
+de 20 segundos, então uma inicialização a frio pode excedê-lo; tente novamente
+depois que o serviço iniciar. Esta configuração inicia um banco Supabase vazio
+e não importa os arquivos SQLite locais.
 
 ## Build, testes e lint
 

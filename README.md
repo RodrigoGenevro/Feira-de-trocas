@@ -130,16 +130,20 @@ and enable HTTPS before exposing the API publicly.
    `jdbc:postgresql://POOLER_HOST:5432/postgres?user=POOLER_USER&password=URL_ENCODED_PASSWORD&sslmode=require`,
    using the exact values from the dashboard. Session mode supports IPv4 and
    persistent connections; do not use the Transaction pooler for this API.
-2. From the repository root, review and push the changes:
+2. From the repository root, create a working branch, review the changes, and
+   push that branch (use a unique branch name):
 
    ```powershell
+   git switch -c feature/my-change
    git status
    git add Dockerfile .dockerignore render.yaml README.md README.pt-BR.md backend frontend DECISIONS.md DECISIONS.pt-BR.md
-   git commit -m "Prepare deployment via Render and Supabase"
-   git push origin main
+   git commit -m "feat: prepare deployment via Render and Supabase"
+   git push -u origin feature/my-change
    ```
 
-   Do not commit `.env` files, passwords, or connection URLs containing secrets.
+   Open a pull request targeting `main`; wait for review and a green CI run
+   before merging. Do not push directly to `main`. Do not commit `.env` files,
+   passwords, or connection URLs containing secrets.
 3. In Render, choose **New → Blueprint**, connect the GitHub repository, and
    select the `main` branch. Render reads `render.yaml`, prompts for
    `TROCAE_DATABASE_URL`, and generates `TROCAE_AUTH_SECRET`. Do not set `PORT`;
@@ -152,8 +156,10 @@ and enable HTTPS before exposing the API publicly.
    client must use the same URL.
 
 Render's free plan may suspend an idle API, so the first request after it wakes
-up can take longer. This configuration starts with an empty Supabase database
-and does not import local SQLite files.
+up can take longer. The desktop client currently has a 20-second request
+timeout, so a cold start may time out; retry after the service has started.
+This configuration starts with an empty Supabase database and does not import
+local SQLite files.
 
 ## Build, tests, and lint
 

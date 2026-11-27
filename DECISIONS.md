@@ -47,14 +47,18 @@ This file records the decisions reflected in the current implementation.
 - **Operation:** Configure the JDBC URL, session secret, and public API URL using
   environment variables; public deployment requires HTTPS.
 
-## 26/11/2026 — Photo links
+## 26/11/2026 — Photo links and briefing requirement
 
-- **Decision:** A photo is optional. When provided, its link must be a public
-  HTTP(S) URL; image files are not uploaded.
+- **Current implementation:** A photo link is optional. When provided, it must
+  be an HTTP(S) URL; image files are not uploaded.
+- **Briefing requirement:** The MVP listing flow requires a photo.
+- **Compliance status:** The current optional-photo behavior does not satisfy
+  that requirement. The implementation and this decision must be revised
+  before claiming full briefing compliance.
 - **Alternative considered:** Storing uploaded image files with the listing.
-- **Rationale:** The existing application displays images from URLs and has no
-  image-storage service. Keeping the photo optional preserves the listing flow
-  when a publisher does not have an image link.
+- **Rationale for the current behavior:** The application displays images from
+  URLs and has no image-storage service. This documents the existing behavior;
+  it does not waive the briefing requirement.
 
 ## 26/11/2026 — AI-powered listing descriptions
 
