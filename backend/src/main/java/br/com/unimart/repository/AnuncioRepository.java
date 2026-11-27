@@ -60,8 +60,8 @@ public class AnuncioRepository {
             valoresFiltro.add(mod);
         }
         String orderBy = switch (ordenacao == null ? "RECENTES" : ordenacao) {
-            case "TITULO_ASC" -> " ORDER BY titulo COLLATE NOCASE ASC, id DESC";
-            case "TITULO_DESC" -> " ORDER BY titulo COLLATE NOCASE DESC, id DESC";
+            case "TITULO_ASC" -> " ORDER BY lower(titulo) ASC, id DESC";
+            case "TITULO_DESC" -> " ORDER BY lower(titulo) DESC, id DESC";
             default -> " ORDER BY id DESC";
         };
         List<Anuncio> anuncios = new ArrayList<>();

@@ -7,6 +7,7 @@ import br.com.unimart.model.Anuncio;
 import br.com.unimart.model.Interesse;
 import br.com.unimart.model.PaginaAnuncios;
 import br.com.unimart.model.Usuario;
+import br.com.unimart.api.FeiraApiClient;
 import br.com.unimart.service.AnuncioService;
 import br.com.unimart.service.AuthService;
 import br.com.unimart.service.InteresseService;
@@ -20,6 +21,7 @@ public class FeiraController {
     private final AnuncioService anuncioService;
     private final InteresseService interesseService;
     private final AuthService authService;
+    private final FeiraApiClient apiClient;
 
     private Usuario usuarioLogado;
 
@@ -27,24 +29,43 @@ public class FeiraController {
         this.anuncioService = new AnuncioService();
         this.interesseService = new InteresseService();
         this.authService = new AuthService();
+        this.apiClient = null;
+    }
+
+    public FeiraController(FeiraApiClient apiClient) {
+        this.anuncioService = null;
+        this.interesseService = null;
+        this.authService = null;
+        this.apiClient = apiClient;
     }
 
     public Usuario login(String email, String senha) throws SQLException {
-        this.usuarioLogado = authService.autenticar(email, senha);
+        this.usuarioLogado = apiClient == null
+                ? authService.autenticar(email, senha)
+                : apiClient.login(email, senha);
         return this.usuarioLogado;
     }
 
     public Usuario cadastrar(String nome, String email, String turma, String senha, String confirmarSenha) throws SQLException {
-        this.usuarioLogado = authService.cadastrar(nome, email, turma, senha, confirmarSenha);
+        this.usuarioLogado = apiClient == null
+                ? authService.cadastrar(nome, email, turma, senha, confirmarSenha)
+                : apiClient.cadastrar(nome, email, turma, senha, confirmarSenha);
         return this.usuarioLogado;
     }
 
     public Usuario atualizarPerfil(String nome, String email, String turma, String novaSenha, String confirmarSenha) throws SQLException {
-        this.usuarioLogado = authService.atualizarPerfil(this.usuarioLogado, nome, email, turma, novaSenha, confirmarSenha);
+        this.usuarioLogado = apiClient == null
+                ? authService.atualizarPerfil(this.usuarioLogado, nome, email, turma, novaSenha, confirmarSenha)
+                : apiClient.atualizarPerfil(
+                        this.usuarioLogado, nome, email, turma, novaSenha, confirmarSenha
+                );
         return this.usuarioLogado;
     }
 
     public void logout() {
+        if (apiClient != null) {
+            apiClient.logout();
+        }
         this.usuarioLogado = null;
     }
 
@@ -68,6 +89,11 @@ public class FeiraController {
     }
 
     public List<Anuncio> buscarAnuncios(String termoBusca, String categoria, String modalidade) throws SQLException {
+        if (apiClient != null) {
+            return apiClient.buscarPaginaAnuncios(
+                    termoBusca, categoria, modalidade, "RECENTES", 0, 100
+            ).anuncios();
+        }
         return anuncioService.listarAnuncios(termoBusca, categoria, modalidade);
     }
 
@@ -75,6 +101,11 @@ public class FeiraController {
             String termoBusca, String categoria, String modalidade,
             String ordenacao, int pagina, int tamanhoPagina
     ) throws SQLException {
+        if (apiClient != null) {
+            return apiClient.buscarPaginaAnuncios(
+                    termoBusca, categoria, modalidade, ordenacao, pagina, tamanhoPagina
+            );
+        }
         return anuncioService.listarPaginaAnuncios(
                 termoBusca, categoria, modalidade, ordenacao, pagina, tamanhoPagina
         );
@@ -82,6 +113,12 @@ public class FeiraController {
 
     public Anuncio criarAnuncio(String nomeAutor, String turma, String titulo, String descricao,
                                 String categoria, String modalidade, String fotoUrl) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            return apiClient.criarAnuncio(
+                    titulo, descricao, categoria, modalidade, fotoUrl
+            );
+        }
         String autorFinal = isLogado() ? usuarioLogado.getNome() : nomeAutor;
         String turmaFinal = (isLogado() && usuarioLogado.getTurma() != null && !usuarioLogado.getTurma().isBlank())
                 ? usuarioLogado.getTurma()
@@ -104,6 +141,11 @@ public class FeiraController {
 
     public void atualizarAnuncio(int anuncioId, String titulo, String descricao,
                                  String categoria, String modalidade, String fotoUrl) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            apiClient.atualizarAnuncio(anuncioId, titulo, descricao, categoria, modalidade, fotoUrl);
+            return;
+        }
         Usuario usuario = usuarioAutenticado();
         Anuncio anuncio = new Anuncio();
         anuncio.setId(anuncioId);
@@ -120,12 +162,21 @@ public class FeiraController {
     }
 
     public void enviarInteresse(int anuncioId, String mensagem) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            apiClient.enviarInteresse(anuncioId, mensagem);
+            return;
+        }
         Usuario usuario = usuarioAutenticado();
         Interesse interesse = new Interesse(anuncioId, usuario.getNome(), mensagem);
         interesseService.registrarInteresse(interesse, usuario.getId(), usuario.getNome());
     }
 
     public List<Interesse> buscarInteressesDoAnuncio(int anuncioId) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            return apiClient.buscarInteresses(anuncioId);
+        }
         Usuario usuario = usuarioAutenticado();
         return interesseService.listarInteressesDoAnuncio(
                 anuncioId, usuario.getId(), usuario.getNome()
@@ -133,21 +184,40 @@ public class FeiraController {
     }
 
     public void aceitarInteresse(int interesseId) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            apiClient.aceitarInteresse(interesseId);
+            return;
+        }
         Usuario usuario = usuarioAutenticado();
         anuncioService.aceitarInteresse(interesseId, usuario.getId(), usuario.getNome());
     }
 
     public void concluirAnuncio(int anuncioId) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            apiClient.concluirAnuncio(anuncioId);
+            return;
+        }
         Usuario usuario = usuarioAutenticado();
         anuncioService.concluirAnuncio(anuncioId, usuario.getId(), usuario.getNome());
     }
 
     public void reabrirAnuncio(int anuncioId) throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            apiClient.reabrirAnuncio(anuncioId);
+            return;
+        }
         Usuario usuario = usuarioAutenticado();
         anuncioService.reabrirAnuncio(anuncioId, usuario.getId(), usuario.getNome());
     }
 
     public List<Anuncio> buscarHistoricoUsuario() throws SQLException {
+        if (apiClient != null) {
+            usuarioAutenticado();
+            return apiClient.buscarHistoricoUsuario();
+        }
         if (!isLogado()) {
             throw new IllegalStateException("É necessário estar conectado para ver o histórico.");
         }
@@ -158,6 +228,9 @@ public class FeiraController {
     }
 
     public List<Usuario> buscarUsuariosCadastrados() throws SQLException {
+        if (apiClient != null) {
+            return List.of();
+        }
         return authService.listarUsuariosCadastrados();
     }
 

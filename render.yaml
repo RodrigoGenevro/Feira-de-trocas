@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: trocae-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: TROCAE_DATABASE_URL
+        sync: false
+      - key: TROCAE_AUTH_SECRET
+        generateValue: true

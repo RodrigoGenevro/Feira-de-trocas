@@ -481,7 +481,7 @@ public class LoginCadastroDialog extends JDialog {
                     loginContaCombo.addItem("Selecione uma conta cadastrada");
 
                     if (usuarios.isEmpty()) {
-                        loginContaCombo.addItem("Nenhuma conta cadastrada");
+                        loginContaCombo.addItem("Entre usando seu e-mail");
                     } else {
                         for (Usuario usuario : usuarios) {
                             String descricao = usuario.getNome() + " — " + usuario.getEmail();
