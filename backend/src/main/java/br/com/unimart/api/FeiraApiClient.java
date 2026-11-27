@@ -121,12 +121,30 @@ public final class FeiraApiClient {
         requisitar("POST", "interests/" + interesseId + "/accept", Map.of(), Void.class);
     }
 
+    public void cancelarInteresse(int interesseId) throws SQLException {
+        requisitar("POST", "interests/" + interesseId + "/cancel", Map.of(), Void.class);
+    }
+
+    public List<Interesse> buscarInteressesDoUsuario() throws SQLException {
+        return requisitarLista("GET", "interests/mine", Interesse.class);
+    }
+
     public void concluirAnuncio(int anuncioId) throws SQLException {
         requisitar("POST", "listings/" + anuncioId + "/complete", Map.of(), Void.class);
     }
 
     public void reabrirAnuncio(int anuncioId) throws SQLException {
         requisitar("POST", "listings/" + anuncioId + "/reopen", Map.of(), Void.class);
+    }
+
+    public void reativarAnuncio(int anuncioId) throws SQLException {
+        requisitar("POST", "listings/" + anuncioId + "/reactivate", Map.of(), Void.class);
+    }
+
+    public void denunciarAnuncio(int anuncioId, String motivo, String detalhes) throws SQLException {
+        requisitar("POST", "reports", Map.of(
+                "listingId", anuncioId, "reason", valor(motivo), "details", valor(detalhes)
+        ), Void.class);
     }
 
     public List<Anuncio> buscarHistoricoUsuario() throws SQLException {

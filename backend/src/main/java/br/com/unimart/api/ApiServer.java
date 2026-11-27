@@ -19,11 +19,13 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.model.Denuncia;
 import br.com.unimart.model.Interesse;
 import br.com.unimart.model.PaginaAnuncios;
 import br.com.unimart.model.Usuario;
 import br.com.unimart.service.AnuncioService;
 import br.com.unimart.service.AuthService;
+import br.com.unimart.service.DenunciaService;
 import br.com.unimart.service.InteresseService;
 import br.com.unimart.util.DatabaseConfig;
 
@@ -36,6 +38,7 @@ public final class ApiServer {
     private final AuthTokenService tokenService;
     private final AuthService authService = new AuthService();
     private final AnuncioService anuncioService = new AnuncioService();
+    private final DenunciaService denunciaService = new DenunciaService();
     private final InteresseService interesseService = new InteresseService();
 
     private ApiServer(String secret) {
@@ -154,6 +157,14 @@ public final class ApiServer {
                     new Interesse(anuncioId, nomeUsuario, texto(body, "message")), usuarioId, nomeUsuario
             );
             responder(exchange, 201, Map.of("status", "created"));
+        } else if ("GET".equals(method) && "/api/interests/mine".equals(path)) {
+            responder(exchange, 200, interesseService.listarInteressesDoUsuario(usuarioId));
+        } else if ("POST".equals(method) && "/api/reports".equals(path)) {
+            denunciaService.registrar(new Denuncia(
+                    inteiro(body.get("listingId")), usuarioId, nomeUsuario,
+                    texto(body, "reason"), texto(body, "details")
+            ));
+            responder(exchange, 201, Map.of("status", "created"));
         } else if (path.startsWith("/api/interests/")) {
             processarInteresse(exchange, method, path, usuarioId, nomeUsuario);
         } else {
@@ -175,6 +186,9 @@ public final class ApiServer {
         } else if (partes.length == 2 && "reopen".equals(partes[1]) && "POST".equals(method)) {
             anuncioService.reabrirAnuncio(anuncioId, usuarioId, nomeUsuario);
             responder(exchange, 204, null);
+        } else if (partes.length == 2 && "reactivate".equals(partes[1]) && "POST".equals(method)) {
+            anuncioService.reativarAnuncio(anuncioId, usuarioId, nomeUsuario);
+            responder(exchange, 204, null);
         } else if (partes.length == 1 && "PUT".equals(method)) {
             Anuncio anuncio = criarAnuncio(body, usuarioId, nomeUsuario);
             anuncio.setId(anuncioId);
@@ -191,6 +205,9 @@ public final class ApiServer {
         String[] partes = path.substring("/api/interests/".length()).split("/");
         if (partes.length == 2 && "accept".equals(partes[1]) && "POST".equals(method)) {
             anuncioService.aceitarInteresse(inteiro(partes[0]), usuarioId, nomeUsuario);
+            responder(exchange, 204, null);
+        } else if (partes.length == 2 && "cancel".equals(partes[1]) && "POST".equals(method)) {
+            interesseService.cancelarInteresse(inteiro(partes[0]), usuarioId);
             responder(exchange, 204, null);
         } else {
             responder(exchange, 404, Map.of("error", "Endpoint não encontrado."));

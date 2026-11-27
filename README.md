@@ -42,30 +42,21 @@ item, search listings, and send a message of interest.
 - Listing owners can edit their available listings from **Meus anúncios**
 - Responsive listing grid with accessible active filters and removable filter
   chips
-- SQLite database backup and restore, with integrity checks before replacement
-  and versioned migrations
+- Versioned SQLite and PostgreSQL migrations, referential integrity, and
+  listing-search indexes
 - Users can cancel interests they sent
 - The backend prevents duplicate interests
 - Users can report other users' listings with a reason and details; reporting
   one's own listing is unavailable
 - Local description suggestions and natural-language search
-- Versioned SQLite migrations, referential integrity checks, and listing-search
-  indexes
 
-The database is local to the machine. Use **Banco de dados** in the application
-header to create a consistent SQLite snapshot or restore a validated backup.
-The current database is preserved if validation or restoration fails. A shared
-hosted database is not configured.
-- HTTP API for authentication, profiles, listings, and interests
-- Versioned PostgreSQL migrations, referential integrity, and search indexes
-- Signed expiring sessions; passwords and database credentials remain on the
-  server
-
-The app is prepared to share data through Supabase PostgreSQL via a Java API.
-To enable sharing, host the API and point every desktop installation to the same
-URL using `TROCAE_API_URL`. The desktop client does not connect directly to the
-database and contains no Supabase credentials. Manage remote backups in the
-Supabase project.
+The desktop client uses a Java API; to share data, point every installation to
+the same URL with `TROCAE_API_URL`. The API uses Supabase PostgreSQL and keeps
+database credentials on the server. The desktop client never connects directly
+to Supabase. Without `TROCAE_API_URL`, the client tries the local API at
+`http://localhost:8080/api`; that API also requires PostgreSQL configuration.
+SQLite remains available for tests and as a legacy data source. Manage remote
+database backups in the Supabase project.
 AI-powered description generation is deferred; the application does not send
 listing data to an external AI provider.
 
@@ -113,6 +104,10 @@ percent-encoded. Session mode supports persistent connections and prepared
 statements. The database account must be allowed to create the tables and
 indexes used by migrations.
 
+For local development, configure the API with a development PostgreSQL database,
+start it, and then start the desktop app in another terminal. In production, set
+`TROCAE_API_URL` in each desktop installation to the public HTTPS URL of the API
+(`https://YOUR-SERVER/api`):
 If `TROCAE_API_URL` is unset, the desktop app uses its local SQLite database;
 data stays on that computer and no API server is required. The app displays a
 notice when it starts in this mode. If `TROCAE_API_URL` is set, the app uses that
@@ -125,6 +120,17 @@ mvn -pl frontend -am install
 mvn -pl frontend exec:java
 ```
 
+To consolidate SQLite databases from multiple machines, work from copies of the
+files and use an empty Supabase database. Start with a dry run:
+
+```powershell
+mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--dry-run C:\backups\computer1.db C:\backups\computer2.db"
+```
+
+Review the counts and manually resolve accounts that share an email
+(case-insensitively) but have different profiles or credentials in the SQLite
+copies. The dry run blocks import when it finds conflicts or invalid references.
+Then run the same file list with:
 To use the shared API locally, start it as described above and set this URL
 before launching the desktop app:
 
@@ -140,11 +146,15 @@ To import data from an existing SQLite database once, first make a copy of the
 file and use an empty Supabase database:
 
 ```powershell
-mvn -pl backend exec:java -Dexec.mainClass="br.com.unimart.util.SqliteToPostgresMigration" -Dexec.args="database/feira_trocas.db"
+mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--apply C:\backups\computer1.db C:\backups\computer2.db"
 ```
 
-The importer preserves IDs, validates row counts, and aborts if destination
-tables already contain records. Do not rerun it after a successful migration.
+The importer keeps every listing, remaps IDs and references for listings,
+interests, and reports, and deduplicates equivalent accounts by normalized
+email. It validates row counts and writes in one transaction; it aborts if the
+destination already contains data. Back up the source files and do not rerun
+after a successful import. Photos remain HTTP(S) links; files are not uploaded
+to Supabase Storage.
 
 Never put the database password or `TROCAE_AUTH_SECRET` in source code, the
 desktop client, or versioned files. Use the hosting provider's secret manager

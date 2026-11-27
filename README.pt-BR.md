@@ -43,8 +43,7 @@ e mensagens de interesse em um só lugar.
 - Edição de anúncios disponíveis pelo próprio anunciante em **Meus anúncios**
 - Grade responsiva de anúncios, filtros acessíveis e chips removíveis para os
   filtros ativos
-- Backup e restauração do SQLite, com verificação de integridade antes da troca
-- Migrações versionadas do SQLite, verificações de integridade referencial e
+- Migrações versionadas do SQLite e PostgreSQL, integridade referencial e
   índices para busca de anúncios
 - Interesses enviados podem ser cancelados pelo próprio usuário
 - Prevenção de interesses duplicados no backend
@@ -52,21 +51,13 @@ e mensagens de interesse em um só lugar.
   denunciar o próprio anúncio
 - Sugestão local de descrição e busca em linguagem natural
 
-O banco de dados é local à máquina. Use **Banco de dados** no cabeçalho para
-criar um snapshot consistente do SQLite ou restaurar um backup validado. O banco
-atual é preservado quando a validação ou a restauração falha. Não há banco
-compartilhado hospedado.
-- API HTTP para autenticação, perfil, anúncios e interesses
-- Migrações versionadas para PostgreSQL, integridade referencial e índices de
-  busca
-- Sessões assinadas com prazo de validade; senhas e credenciais do banco ficam
-  no servidor
-
-O app foi preparado para compartilhar dados pelo PostgreSQL do Supabase através
-de uma API Java. Para efetivar o compartilhamento, a API precisa ser hospedada e
-todas as instalações devem apontar para a mesma URL com `TROCAE_API_URL`. O
-cliente desktop não se conecta diretamente ao banco nem contém credenciais do
-Supabase. Backups remotos devem ser gerenciados no projeto Supabase.
+O cliente desktop usa uma API Java; para compartilhar os dados, todas as
+instalações devem apontar para a mesma URL com `TROCAE_API_URL`. A API usa
+PostgreSQL no Supabase e mantém as credenciais do banco no servidor. O cliente
+não se conecta diretamente ao Supabase. Sem `TROCAE_API_URL`, o cliente tenta a
+API local em `http://localhost:8080/api`; essa API também precisa de PostgreSQL
+configurado. SQLite permanece para testes e como origem de dados legados.
+Backups do banco remoto devem ser gerenciados no projeto Supabase.
 A geração de descrições com IA foi adiada; o aplicativo não envia dados dos
 anúncios a um provedor externo de IA.
 
@@ -113,6 +104,10 @@ mostrados pelo painel; caracteres especiais na senha da URL devem ser codificado
 O modo Session aceita conexões persistentes e prepared statements. A conta do
 banco precisa ter permissão para criar as tabelas e índices das migrações.
 
+Para desenvolvimento local, configure a API com um PostgreSQL de desenvolvimento,
+inicie-a e, em outro terminal, inicie o app. Em produção, configure
+`TROCAE_API_URL` em cada instalação desktop para a URL HTTPS pública da API
+(`https://SEU-SERVIDOR/api`):
 Se `TROCAE_API_URL` não estiver configurada, o app desktop usa o banco SQLite
 local; os dados ficam apenas nesse computador e não é necessário iniciar uma API.
 O app exibe um aviso ao iniciar nesse modo. Se `TROCAE_API_URL` estiver
@@ -126,6 +121,8 @@ mvn -pl frontend -am install
 mvn -pl frontend exec:java
 ```
 
+Para consolidar bancos SQLite de várias máquinas, trabalhe com cópias dos
+arquivos e use um banco Supabase vazio. Primeiro execute a simulação:
 Para usar a API compartilhada localmente, inicie-a como
 descrito antes e configure o endereço abaixo antes de abrir o app:
 
@@ -141,12 +138,24 @@ Para importar uma vez os dados de um SQLite existente, faça primeiro uma cópia
 do arquivo e use um banco Supabase vazio:
 
 ```powershell
-mvn -pl backend exec:java -Dexec.mainClass="br.com.unimart.util.SqliteToPostgresMigration" -Dexec.args="database/feira_trocas.db"
+mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--dry-run C:\backups\maquina1.db C:\backups\maquina2.db"
 ```
 
-O importador preserva os IDs, valida as quantidades e cancela a operação se as
-tabelas de destino já contiverem registros. Não execute novamente após uma
-migração bem-sucedida.
+Revise as contagens e resolva manualmente as contas com o mesmo e-mail
+(ignorando maiúsculas/minúsculas) mas perfil ou credenciais divergentes nas
+cópias SQLite. A simulação bloqueia a importação quando há divergências ou
+referências inválidas. Depois, com a mesma lista de arquivos, execute:
+
+```powershell
+mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--apply C:\backups\maquina1.db C:\backups\maquina2.db"
+```
+
+O importador mantém todos os anúncios, remapeia IDs e referências de anúncios,
+interesses e denúncias, e deduplica contas equivalentes por e-mail normalizado.
+Ele valida as quantidades e executa a escrita em uma transação; cancela se o
+destino já contiver dados. Faça backup das origens e não execute novamente após
+uma importação bem-sucedida. Fotos continuam sendo links HTTP(S), não uploads
+para o Supabase Storage.
 
 Nunca coloque a senha do banco ou `TROCAE_AUTH_SECRET` no código, no cliente
 desktop ou em arquivos versionados. Use segredos do provedor de hospedagem e
