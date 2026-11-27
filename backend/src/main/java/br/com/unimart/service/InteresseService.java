@@ -37,4 +37,18 @@ public class InteresseService {
         }
         return repository.listarPorAnuncio(anuncioId, usuarioId, nomeUsuario);
     }
+
+    public void cancelarInteresse(int interesseId, int usuarioId) throws SQLException {
+        if (usuarioId <= 0) {
+            throw new IllegalArgumentException("É necessário estar conectado.");
+        }
+        repository.cancelar(interesseId, usuarioId);
+    }
+
+    public List<Interesse> listarInteressesDoUsuario(int usuarioId) throws SQLException {
+        if (usuarioId <= 0) {
+            throw new IllegalArgumentException("É necessário estar conectado.");
+        }
+        return repository.listarPorUsuario(usuarioId);
+    }
 }

@@ -56,6 +56,7 @@ class AnuncioRepositoryTest {
                         anuncio_id INTEGER NOT NULL,
                         nome TEXT NOT NULL,
                         mensagem TEXT NOT NULL,
+                        usuario_id INTEGER,
                         status TEXT NOT NULL DEFAULT 'PENDENTE',
                         criado_em TEXT DEFAULT CURRENT_TIMESTAMP
                     )
@@ -103,6 +104,19 @@ class AnuncioRepositoryTest {
     }
 
     @Test
+    void reativarAnuncioConcluidoVoltaEleParaDisponivel() throws SQLException {
+        inserirAnuncio(1, "Livro concluído", 10, "Ana", "CONCLUIDO");
+        inserirInteresse(101, 1, "Bia", "Tenho interesse.", "ENCERRADO");
+        inserirInteresse(102, 1, "Caio", "Tive interesse.", "ACEITO");
+
+        anuncioRepository.reativarAnuncio(1, 10, "Ana");
+
+        assertEquals("DISPONIVEL", buscarStatusAnuncio(1));
+        assertEquals("PENDENTE", buscarStatusInteresse(101));
+        assertEquals("CANCELADO", buscarStatusInteresse(102));
+    }
+
+    @Test
     void interesseNaoPodeSerAceitoParaAnuncioQueJaFoiReservado() throws SQLException {
         inserirAnuncio(1, "Caderno", 10, "Ana", "RESERVADO");
         inserirInteresse(101, 1, "Bia", "Tenho interesse.", "PENDENTE");
@@ -132,6 +146,31 @@ class AnuncioRepositoryTest {
                 () -> interesseRepository.salvar(new Interesse(2, "Caio", "Tenho interesse."), 20, "Caio")
         );
         assertEquals(0, contarInteresses(2));
+    }
+
+    @Test
+    void usuarioNaoPodeRegistrarInteresseDuplicadoNemCancelarOutroUsuario() throws SQLException {
+        inserirAnuncio(1, "Livro", 10, "Ana", "DISPONIVEL");
+
+        interesseRepository.salvar(new Interesse(1, "Bia", "Tenho interesse."), 20, "Bia");
+        assertEquals(1, contarInteresses(1));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> interesseRepository.salvar(
+                        new Interesse(1, "Bia", "Ainda tenho interesse."),
+                        20,
+                        "Bia"
+                )
+        );
+        assertEquals(1, contarInteresses(1));
+
+        int interesseId = primeiroInteresse(1);
+        assertThrows(
+                IllegalStateException.class,
+                () -> interesseRepository.cancelar(interesseId, 30)
+        );
+        interesseRepository.cancelar(interesseId, 20);
+        assertEquals("CANCELADO", buscarStatusInteresse(interesseId));
     }
 
     @Test
@@ -278,6 +317,19 @@ class AnuncioRepositoryTest {
         try (Connection connection = DriverManager.getConnection(jdbcUrl);
              PreparedStatement statement = connection.prepareStatement(
                      "SELECT COUNT(*) FROM interesses WHERE anuncio_id = ?"
+             )) {
+            statement.setInt(1, anuncioId);
+            try (ResultSet result = statement.executeQuery()) {
+                assertTrue(result.next());
+                return result.getInt(1);
+            }
+        }
+    }
+
+    private int primeiroInteresse(int anuncioId) throws SQLException {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT id FROM interesses WHERE anuncio_id = ? ORDER BY id LIMIT 1"
              )) {
             statement.setInt(1, anuncioId);
             try (ResultSet result = statement.executeQuery()) {

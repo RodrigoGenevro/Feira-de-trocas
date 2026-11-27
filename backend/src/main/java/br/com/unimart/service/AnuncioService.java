@@ -35,13 +35,73 @@ public class AnuncioService {
             throw new IllegalArgumentException("Os parâmetros de paginação são inválidos.");
         }
         String[] filtros = normalizarFiltros(categoriaSelecionada, modalidadeSelecionada);
+        BuscaNatural buscaNatural = normalizarBuscaNatural(termoBusca);
+        if (filtros[0].isEmpty() && buscaNatural.getCategoria() != null) {
+            filtros[0] = buscaNatural.getCategoria();
+        }
         long deslocamento = (long) pagina * tamanhoPagina;
         if (deslocamento > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("O número da página excede o limite permitido.");
         }
         return repository.buscarPaginaDisponiveis(
-                termoBusca, filtros[0], filtros[1], ordenacao, tamanhoPagina, (int) deslocamento
+                buscaNatural.getTermo(), filtros[0], filtros[1],
+                ordenacao, tamanhoPagina, (int) deslocamento
         );
+    }
+
+    private BuscaNatural normalizarBuscaNatural(String termoBusca) {
+        if (termoBusca == null) {
+            return new BuscaNatural("", null);
+        }
+        String termo = termoBusca.trim();
+        String lower = termo.toLowerCase(java.util.Locale.ROOT);
+        String categoria = null;
+        if (lower.contains("livro")) {
+            categoria = "Livros";
+        } else if (lower.contains("material escolar") || lower.contains("caderno")
+                || lower.contains("caneta") || lower.contains("lapiseira")) {
+            categoria = "Materiais escolares";
+        } else if (lower.contains("eletrônico") || lower.contains("eletronico")
+                || lower.contains("calculadora") || lower.contains("celular")) {
+            categoria = "Eletrônicos";
+        } else if (lower.contains("equipamento") || lower.contains("mouse")
+                || lower.contains("teclado") || lower.contains("fone")) {
+            categoria = "Equipamentos";
+        }
+        String termoLimpo = lower
+                .replace("procurando", "")
+                .replace("procuro", "")
+                .replace("livro", "")
+                .replace("caderno", "")
+                .replace("material escolar", "")
+                .replace("calculadora", "")
+                .replace("celular", "")
+                .replace("mouse", "")
+                .replace("teclado", "")
+                .replace("fone", "")
+                .replace("eletrônico", "")
+                .replace("eletronico", "")
+                .replace("equipamento", "")
+                .trim();
+        return new BuscaNatural(termoLimpo.isEmpty() ? termo : termoLimpo, categoria);
+    }
+
+    private static final class BuscaNatural {
+        private final String termo;
+        private final String categoria;
+
+        private BuscaNatural(String termo, String categoria) {
+            this.termo = termo;
+            this.categoria = categoria;
+        }
+
+        private String getTermo() {
+            return termo;
+        }
+
+        private String getCategoria() {
+            return categoria;
+        }
     }
 
     private String[] normalizarFiltros(String categoriaSelecionada, String modalidadeSelecionada) {
@@ -77,6 +137,11 @@ public class AnuncioService {
     public void reabrirAnuncio(int id, int usuarioId, String nomeUsuario) throws SQLException {
         validarAnuncioEIdentidade(id, usuarioId, nomeUsuario);
         repository.reabrirAnuncio(id, usuarioId, nomeUsuario);
+    }
+
+    public void reativarAnuncio(int id, int usuarioId, String nomeUsuario) throws SQLException {
+        validarAnuncioEIdentidade(id, usuarioId, nomeUsuario);
+        repository.reativarAnuncio(id, usuarioId, nomeUsuario);
     }
 
     public void aceitarInteresse(int interesseId, int usuarioId, String nomeUsuario) throws SQLException {

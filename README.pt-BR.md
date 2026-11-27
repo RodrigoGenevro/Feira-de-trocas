@@ -39,13 +39,18 @@ e mensagens de interesse em um só lugar.
   publicação
 - Envio de mensagens de interesse em anúncios disponíveis
 - Controles do anunciante para ver interesses, aceitar um deles e reservar o
-  anúncio, reabrir uma reserva ou concluir o anúncio
+  anúncio, reabrir uma reserva, concluir ou reativar o anúncio
 - Edição de anúncios disponíveis pelo próprio anunciante em **Meus anúncios**
 - Grade responsiva de anúncios, filtros acessíveis e chips removíveis para os
   filtros ativos
 - Backup e restauração do SQLite, com verificação de integridade antes da troca
 - Migrações versionadas do SQLite, verificações de integridade referencial e
   índices para busca de anúncios
+- Interesses enviados podem ser cancelados pelo próprio usuário
+- Prevenção de interesses duplicados no backend
+- Denúncia de anúncios de outras pessoas com motivo e detalhes; não é possível
+  denunciar o próprio anúncio
+- Sugestão local de descrição e busca em linguagem natural
 
 O banco de dados é local à máquina. Use **Banco de dados** no cabeçalho para
 criar um snapshot consistente do SQLite ou restaurar um backup validado. O banco

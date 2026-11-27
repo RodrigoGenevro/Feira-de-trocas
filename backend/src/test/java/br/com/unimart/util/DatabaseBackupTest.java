@@ -112,7 +112,7 @@ class DatabaseBackupTest {
         try (Connection connection = DatabaseConfig.getConnection(jdbcUrl);
              Statement statement = connection.createStatement()) {
             assertEquals(1, obterInteiro(statement, "PRAGMA foreign_keys"));
-            assertEquals(2, obterInteiro(statement, "SELECT COUNT(*) FROM schema_migrations"));
+            assertEquals(3, obterInteiro(statement, "SELECT COUNT(*) FROM schema_migrations"));
             assertEquals(1, obterInteiro(statement, "SELECT COUNT(*) FROM anuncios WHERE titulo = 'Livro legado'"));
             assertEquals(1, obterInteiro(statement,
                     "SELECT COUNT(*) FROM pragma_table_info('anuncios') WHERE name = 'usuario_id'"));

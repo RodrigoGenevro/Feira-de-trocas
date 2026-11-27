@@ -217,6 +217,24 @@ public class AnuncioRepository {
         }
     }
 
+    public void reativarAnuncio(int id, int usuarioId, String nomeUsuario) throws SQLException {
+        try (Connection connection = abrirConexao()) {
+            connection.setAutoCommit(false);
+            try {
+                atualizarStatusDoUsuario(
+                        connection, id, usuarioId, nomeUsuario,
+                        Anuncio.STATUS_CONCLUIDO, Anuncio.STATUS_DISPONIVEL
+                );
+                atualizarStatusInteressesAceitos(connection, id);
+                reabrirInteressesEncerrados(connection, id);
+                connection.commit();
+            } catch (SQLException | RuntimeException e) {
+                rollback(connection, e);
+                throw e;
+            }
+        }
+    }
+
     public List<Anuncio> buscarPorUsuario(int usuarioId, String nomeUsuario) throws SQLException {
         List<Anuncio> lista = new ArrayList<>();
         String sql = "SELECT id, titulo, descricao, categoria, modalidade, nome, turma, foto, status, criado_em, usuario_id FROM anuncios " +

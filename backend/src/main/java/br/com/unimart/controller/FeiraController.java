@@ -4,11 +4,13 @@ import java.sql.SQLException;
 import java.util.List;
 
 import br.com.unimart.model.Anuncio;
+import br.com.unimart.model.Denuncia;
 import br.com.unimart.model.Interesse;
 import br.com.unimart.model.PaginaAnuncios;
 import br.com.unimart.model.Usuario;
 import br.com.unimart.service.AnuncioService;
 import br.com.unimart.service.AuthService;
+import br.com.unimart.service.DenunciaService;
 import br.com.unimart.service.InteresseService;
 
 /**
@@ -20,6 +22,7 @@ public class FeiraController {
     private final AnuncioService anuncioService;
     private final InteresseService interesseService;
     private final AuthService authService;
+    private final DenunciaService denunciaService;
 
     private Usuario usuarioLogado;
 
@@ -27,6 +30,7 @@ public class FeiraController {
         this.anuncioService = new AnuncioService();
         this.interesseService = new InteresseService();
         this.authService = new AuthService();
+        this.denunciaService = new DenunciaService();
     }
 
     public Usuario login(String email, String senha) throws SQLException {
@@ -125,6 +129,24 @@ public class FeiraController {
         interesseService.registrarInteresse(interesse, usuario.getId(), usuario.getNome());
     }
 
+    public void cancelarInteresse(int interesseId) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        interesseService.cancelarInteresse(interesseId, usuario.getId());
+    }
+
+    public List<Interesse> buscarInteressesDoUsuario() throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        return interesseService.listarInteressesDoUsuario(usuario.getId());
+    }
+
+    public void denunciarAnuncio(int anuncioId, String motivo, String detalhes) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        Denuncia denuncia = new Denuncia(
+                anuncioId, usuario.getId(), usuario.getNome(), motivo, detalhes
+        );
+        denunciaService.registrar(denuncia);
+    }
+
     public List<Interesse> buscarInteressesDoAnuncio(int anuncioId) throws SQLException {
         Usuario usuario = usuarioAutenticado();
         return interesseService.listarInteressesDoAnuncio(
@@ -145,6 +167,11 @@ public class FeiraController {
     public void reabrirAnuncio(int anuncioId) throws SQLException {
         Usuario usuario = usuarioAutenticado();
         anuncioService.reabrirAnuncio(anuncioId, usuario.getId(), usuario.getNome());
+    }
+
+    public void reativarAnuncio(int anuncioId) throws SQLException {
+        Usuario usuario = usuarioAutenticado();
+        anuncioService.reativarAnuncio(anuncioId, usuario.getId(), usuario.getNome());
     }
 
     public List<Anuncio> buscarHistoricoUsuario() throws SQLException {

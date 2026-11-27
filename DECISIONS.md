@@ -51,3 +51,20 @@ This file records the decisions reflected in the current implementation.
 - **Alternative considered:** Sending listing text to a hosted AI API.
 - **Rationale:** No provider or API key was selected. Listing data should not be
   sent to an external provider without an explicit decision.
+
+## November 27, 2026 — Local search and description assistance
+
+- **Decision:** Implement a local description suggestion and basic
+  natural-language term recognition without sending data to external providers.
+- **Rationale:** This keeps assisted behavior transparent and safe within the
+  immersion deadline while allowing a demonstration without API credentials.
+
+## November 27, 2026 — Interest integrity and reports
+
+- **Decision:** Prevent duplicate interests, allow the interested user to cancel
+  a pending interest, and allow one report per user and announcement only when
+  the announcement belongs to someone else.
+- **Rationale:** This closes important use cases, reduces noise in the listing and
+  creates clear responsibilities for expressing interest or reporting content.
+  The interface hides the report action for the owner's listings, and the
+  backend also rejects self-reports.
