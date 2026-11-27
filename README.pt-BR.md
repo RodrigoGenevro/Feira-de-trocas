@@ -183,8 +183,9 @@ mvn --batch-mode --no-transfer-progress verify
 
 O comando executa os testes do backend e do frontend e o Checkstyle. Os testes
 SQLite continuam cobrindo o modo legado; a conexão Supabase exige configuração
-externa e deve ser validada no ambiente de deploy. O GitHub Actions executa a
-validação local em todo pull request e em cada push para `main`.
+externa e deve ser validada no ambiente de deploy. O GitHub Actions executa
+esse comando no Ubuntu com Temurin JDK 25 em todo pull request e em cada push
+para `main`; consulte [o workflow de CI](.github/workflows/ci.yml).
 
 ## Deploy e links
 
