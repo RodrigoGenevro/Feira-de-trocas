@@ -21,9 +21,9 @@ item, search listings, and send a message of interest.
 
 ## Technology
 
-- Java 25 (latest LTS)
+- Java 21
 - Java Swing desktop interface
-- Java API and hosted PostgreSQL on Supabase
+- Local SQLite database file; no external service
 - Maven multi-module build (`backend/` and `frontend/`)
 
 ## Current features
@@ -42,7 +42,7 @@ item, search listings, and send a message of interest.
 - Listing owners can edit their available listings from **Meus anúncios**
 - Responsive listing grid with accessible active filters and removable filter
   chips
-- Versioned SQLite and PostgreSQL migrations, referential integrity, and
+- Versioned SQLite migrations, referential integrity, and
   listing-search indexes
 - Users can cancel interests they sent
 - The backend prevents duplicate interests
@@ -50,13 +50,10 @@ item, search listings, and send a message of interest.
   one's own listing is unavailable
 - Local description suggestions and natural-language search
 
-The desktop client uses a Java API; to share data, point every installation to
-the same URL with `TROCAE_API_URL`. The API uses Supabase PostgreSQL and keeps
-database credentials on the server. The desktop client never connects directly
-to Supabase. Without `TROCAE_API_URL`, the client tries the local API at
-`http://localhost:8080/api`; that API also requires PostgreSQL configuration.
-SQLite remains available for tests and as a legacy data source. Manage remote
-database backups in the Supabase project.
+The application connects directly to a local SQLite database at
+`database/feira_trocas.db`. It creates and migrates this file on first launch.
+Data stays on that computer; there is no API, server, or synchronization between
+installations. No `.env` file is needed or used.
 AI-powered description generation is deferred; the application does not send
 listing data to an external AI provider.
 
@@ -70,133 +67,33 @@ listing data to an external AI provider.
 ├── DECISIONS.pt-BR.md
 ├── AI_LOG.md
 ├── AI_LOG.pt-BR.md
-├── backend/              # API, models, services, controller, and repositories
+├── backend/              # models, services, controller, repositories, and SQLite
 ├── frontend/             # Swing screens, components, and application entry point
 ├── config/               # Checkstyle rules
-├── database/             # Legacy local SQLite database for development
+├── database/             # Local SQLite database file (ignored by Git)
 ├── .github/workflows/    # Build, test, and lint workflow
 └── docs/                 # Briefing, rules, and architecture notes
 ```
 
 ## Requirements
 
-- JDK 25
-- Maven 3.9 or newer
+- JDK 21 or newer
+- Maven 3.9 or newer (or use the included Maven Wrapper)
 
-## Run locally
+## Run
 
-Create a Supabase project and configure the API with its PostgreSQL JDBC URL, a
-random session secret (at least 32 bytes), and the port assigned by the hosting
-provider. For Render, choose **Connect → Session pooler** in the Supabase
-dashboard and copy the host, port, user, and database shown there. The API
-applies migrations when it starts:
+From the repository root, build and launch the desktop application:
 
 ```powershell
-$env:TROCAE_DATABASE_URL = "jdbc:postgresql://POOLER_HOST:5432/postgres?user=POOLER_USER&password=URL_ENCODED_PASSWORD&sslmode=require"
-$env:TROCAE_AUTH_SECRET = "replace-with-a-random-secret-at-least-32-bytes-long"
-$env:PORT = "8080"
-mvn -pl backend exec:java -Dexec.mainClass="br.com.unimart.api.ApiServer"
+.\mvnw.cmd clean install
+.\mvnw.cmd -pl frontend exec:java
 ```
 
-The pooler username may include the project reference. Use the exact values
-shown in the dashboard; special characters in the URL password must be
-percent-encoded. Session mode supports persistent connections and prepared
-statements. The database account must be allowed to create the tables and
-indexes used by migrations.
-
-For local development, configure the API with a development PostgreSQL database,
-start it, and then start the desktop app in another terminal. In production, set
-`TROCAE_API_URL` in each desktop installation to the public HTTPS URL of the API
-(`https://YOUR-SERVER/api`):
-If `TROCAE_API_URL` is unset, the desktop app uses its local SQLite database;
-data stays on that computer and no API server is required. The app displays a
-notice when it starts in this mode. If `TROCAE_API_URL` is set, the app uses that
-API and reports connection failures rather than silently switching databases.
-To launch in local mode, leave the variable unset and run:
-
-```powershell
-Remove-Item Env:TROCAE_API_URL -ErrorAction SilentlyContinue
-mvn -pl frontend -am install
-mvn -pl frontend exec:java
-```
-
-To consolidate SQLite databases from multiple machines, work from copies of the
-files and use an empty Supabase database. Start with a dry run:
-
-```powershell
-mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--dry-run C:\backups\computer1.db C:\backups\computer2.db"
-```
-
-Review the counts and manually resolve accounts that share an email
-(case-insensitively) but have different profiles or credentials in the SQLite
-copies. The dry run blocks import when it finds conflicts or invalid references.
-Then run the same file list with:
-To use the shared API locally, start it as described above and set this URL
-before launching the desktop app:
-
-```powershell
-$env:TROCAE_API_URL = "http://localhost:8080/api"
-mvn -pl frontend exec:java
-```
-
-In production, set `TROCAE_API_URL` to the public HTTPS URL of the API
-(`https://YOUR-SERVER/api`) before launching.
-
-To import data from an existing SQLite database once, first make a copy of the
-file and use an empty Supabase database:
-
-```powershell
-mvn -pl backend exec:java "-Dexec.mainClass=br.com.unimart.util.SqliteToPostgresMigration" "-Dexec.args=--apply C:\backups\computer1.db C:\backups\computer2.db"
-```
-
-The importer keeps every listing, remaps IDs and references for listings,
-interests, and reports, and deduplicates equivalent accounts by normalized
-email. It validates row counts and writes in one transaction; it aborts if the
-destination already contains data. Back up the source files and do not rerun
-after a successful import. Photos remain HTTP(S) links; files are not uploaded
-to Supabase Storage.
-
-Never put the database password or `TROCAE_AUTH_SECRET` in source code, the
-desktop client, or versioned files. Use the hosting provider's secret manager
-and enable HTTPS before exposing the API publicly.
-
-## Deploy the API to Render
-
-1. Create a Supabase project and open **Connect → Session pooler**. Copy the
-   host, port, user, and database shown there. Use a URL such as
-   `jdbc:postgresql://POOLER_HOST:5432/postgres?user=POOLER_USER&password=URL_ENCODED_PASSWORD&sslmode=require`,
-   using the exact values from the dashboard. Session mode supports IPv4 and
-   persistent connections; do not use the Transaction pooler for this API.
-2. From the repository root, create a working branch, review the changes, and
-   push that branch (use a unique branch name):
-
-   ```powershell
-   git switch -c feature/my-change
-   git status
-   git add Dockerfile .dockerignore render.yaml README.md README.pt-BR.md backend frontend DECISIONS.md DECISIONS.pt-BR.md
-   git commit -m "feat: prepare deployment via Render and Supabase"
-   git push -u origin feature/my-change
-   ```
-
-   Open a pull request targeting `main`; wait for review and a green CI run
-   before merging. Do not push directly to `main`. Do not commit `.env` files,
-   passwords, or connection URLs containing secrets.
-3. In Render, choose **New → Blueprint**, connect the GitHub repository, and
-   select the `main` branch. Render reads `render.yaml`, prompts for
-   `TROCAE_DATABASE_URL`, and generates `TROCAE_AUTH_SECRET`. Do not set `PORT`;
-   Render provides it.
-4. Once the deploy is healthy, open `https://<service>.onrender.com/health`;
-   the expected response is `{"status":"ok"}`. The API creates its tables at
-   startup.
-5. On each desktop computer, set
-   `TROCAE_API_URL=https://<service>.onrender.com/api` and restart the app. Every
-   client must use the same URL.
-
-Render's free plan may suspend an idle API, so the first request after it wakes
-up can take longer. The desktop client currently has a 20-second request
-timeout, so a cold start may time out; retry after the service has started.
-This configuration starts with an empty Supabase database and does not import
-local SQLite files.
+The application creates `database/feira_trocas.db` and applies schema
+migrations on first launch. Use **Banco de dados → Fazer backup** to save a
+backup file. To recover data, choose **Banco de dados → Restaurar backup** and
+select a valid backup; restoration replaces the current data. Database files
+are excluded from Git.
 
 ## Build, tests, and lint
 
@@ -204,17 +101,14 @@ local SQLite files.
 mvn --batch-mode --no-transfer-progress verify
 ```
 
-The command runs backend and frontend tests and Checkstyle. SQLite tests continue
-to cover the legacy mode; Supabase connectivity requires external configuration
-and must be validated in the deployment environment. GitHub Actions runs this
+The command runs backend and frontend tests and Checkstyle. Tests use temporary
+SQLite databases and do not access personal data. GitHub Actions runs this
 command on Ubuntu with Temurin JDK 25 for every pull request and every push to
 `main`. The workflow uses `actions/checkout@v7` and `actions/setup-java@v6`,
 with Java compiler problem annotations enabled; see
 [the CI workflow](.github/workflows/ci.yml).
 
-## Deployment and project links
+## Project links
 
 - **Repository:** https://github.com/RodrigoGenevro/Feira-de-trocas
-- **Deployment:** `render.yaml` is ready; the service is not live until GitHub is
-  connected and Supabase is configured in Render.
 - **GitHub Project board:** Not configured.

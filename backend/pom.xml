@@ -16,11 +16,6 @@
       <version>3.50.3.0</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.18.3</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.36</version>
@@ -31,19 +26,6 @@
       <artifactId>junit-jupiter</artifactId>
       <version>5.11.4</version>
       <scope>test</scope>
-    </dependency>
-    <!-- Driver PostgreSQL para conectar no Supabase -->
-    <dependency>
-        <groupId>org.postgresql</groupId>
-        <artifactId>postgresql</artifactId>
-        <version>42.7.5</version>
-    </dependency>
-
-    <!-- Leitor de variáveis de ambiente -->
-    <dependency>
-        <groupId>io.github.cdimascio</groupId>
-        <artifactId>dotenv-java</artifactId>
-        <version>3.0.2</version>
     </dependency>
   </dependencies>
 
