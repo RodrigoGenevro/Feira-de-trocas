@@ -14,6 +14,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -24,6 +27,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -33,10 +37,12 @@ import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import br.com.unimart.controller.FeiraController;
 import br.com.unimart.model.Anuncio;
 import br.com.unimart.model.PaginaAnuncios;
+import br.com.unimart.util.DatabaseBackup;
 import br.com.unimart.util.Theme;
 import br.com.unimart.view.components.AnuncioCard;
 import br.com.unimart.view.dialogs.InteresseDialog;
@@ -199,7 +205,7 @@ public class MainFrame extends JFrame {
         }
 
         databaseBtn = Theme.createButton("Banco de dados", new Color(0xEE, 0xF2, 0xF0), Theme.TEXT_MAIN);
-        databaseBtn.setToolTipText("Os dados compartilhados são armazenados no Supabase");
+        databaseBtn.setToolTipText("Os dados ficam em um arquivo SQLite neste computador");
         databaseBtn.getAccessibleContext().setAccessibleName("Opções do banco de dados");
         databaseBtn.addActionListener(e -> abrirOpcoesBanco());
         authActionsPanel.add(databaseBtn);
@@ -685,13 +691,105 @@ public class MainFrame extends JFrame {
     }
 
     private void abrirOpcoesBanco() {
-        JOptionPane.showMessageDialog(
+        Object[] opcoes = {"Fazer backup", "Restaurar backup", "Cancelar"};
+        int escolha = JOptionPane.showOptionDialog(
                 this,
-                "Os dados são compartilhados pelo Supabase. Backups e restaurações do banco remoto "
-                        + "devem ser feitos pela configuração do projeto Supabase.",
+                "Escolha uma ação para o banco SQLite local.",
                 "Banco de dados",
-                JOptionPane.QUESTION_MESSAGE
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opcoes,
+                opcoes[2]
         );
+        if (escolha == 0) {
+            criarBackupBanco();
+        } else if (escolha == 1) {
+            restaurarBackupBanco();
+        }
+    }
+
+    private void criarBackupBanco() {
+        JFileChooser seletor = new JFileChooser();
+        seletor.setDialogTitle("Salvar backup do banco de dados");
+        seletor.setFileFilter(new FileNameExtensionFilter("Banco SQLite (*.db)", "db"));
+        seletor.setSelectedFile(Path.of("feira_trocas_backup.db").toFile());
+        if (seletor.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        Path destino = seletor.getSelectedFile().toPath();
+        if (!destino.getFileName().toString().toLowerCase().endsWith(".db")) {
+            destino = destino.resolveSibling(destino.getFileName() + ".db");
+        }
+        if (Files.exists(destino)
+                && JOptionPane.showConfirmDialog(
+                        this,
+                        "Este arquivo já existe. Deseja substituí-lo?",
+                        "Substituir backup",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                ) != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            DatabaseBackup.criarBackup(destino);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Backup criado com sucesso em:\n" + destino.toAbsolutePath(),
+                    "Backup concluído",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (IOException | SQLException | IllegalArgumentException erro) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Não foi possível criar o backup: " + erro.getMessage(),
+                    "Erro no backup",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void restaurarBackupBanco() {
+        JFileChooser seletor = new JFileChooser();
+        seletor.setDialogTitle("Selecionar backup para restauração");
+        seletor.setFileFilter(new FileNameExtensionFilter("Bancos SQLite (*.db, *.sqlite)", "db", "sqlite"));
+        if (seletor.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        int confirmacao = JOptionPane.showConfirmDialog(
+                this,
+                "Restaurar este backup substituirá todos os dados atuais do aplicativo. "
+                        + "Essa ação não pode ser desfeita. Deseja continuar?",
+                "Confirmar restauração",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (confirmacao != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            DatabaseBackup.restaurarBackup(seletor.getSelectedFile().toPath());
+            controller.logout();
+            atualizarHeaderAuth();
+            atualizarGrid();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Backup restaurado com sucesso.",
+                    "Restauração concluída",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (IOException | SQLException | IllegalArgumentException erro) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Não foi possível restaurar o backup: " + erro.getMessage(),
+                    "Erro na restauração",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
 
     private AnuncioCard criarCartaoAnuncio(Anuncio anuncio) {
@@ -704,9 +802,24 @@ public class MainFrame extends JFrame {
                 return;
             }
             new InteresseDialog(this, controller, anuncioSelecionado).setVisible(true);
-        }), anuncioProprio ? null : anuncioSelecionado -> executarAcaoAutenticada(() ->
-                new DenunciaDialog(this, controller, anuncioSelecionado).setVisible(true)
-        ), !anuncioProprio);
+        }), anuncioProprio ? null : this::abrirDenuncia, !anuncioProprio);
+    }
+
+    private void abrirDenuncia(Anuncio anuncio) {
+        if (!controller.isLogado()) {
+            abrirLoginECarregar(() -> abrirDenuncia(anuncio));
+            return;
+        }
+        if (controller.anuncioPertenceAoUsuarioLogado(anuncio)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Você não pode denunciar o próprio anúncio.",
+                    "Atenção",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        new DenunciaDialog(this, controller, anuncio).setVisible(true);
     }
 
     private void exibirErroCarregamento(Throwable erro) {

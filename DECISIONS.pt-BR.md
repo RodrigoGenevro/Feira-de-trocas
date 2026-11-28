@@ -4,6 +4,15 @@
 
 Este arquivo registra as decisões refletidas na implementação atual.
 
+## 27/11/2026 — SQLite local como banco único
+
+- **Decisão:** Usar um arquivo SQLite em cada computador, acessado diretamente
+  pelo aplicativo desktop. Não exigir API Java, Supabase ou deploy hospedado.
+- **Alternativa considerada:** Um banco remoto compartilhado, acessado por uma API.
+- **Motivo:** Manter o aplicativo autocontido e dispensar a configuração de
+  serviços externos. Os dados ficam locais e não são sincronizados entre
+  computadores.
+
 ## 23/11/2026 — Stack Java para desktop
 
 - **Decisão:** Usar Java 21, Swing e Maven.
@@ -33,7 +42,8 @@ Este arquivo registra as decisões refletidas na implementação atual.
   criado durante a execução.
 - **Alternativa considerada:** Um banco Supabase compartilhado.
 - **Motivo e situação:** Esta foi a implementação inicial; a decisão foi
-  substituída em 27/11/2026 pela integração compartilhada descrita abaixo.
+  seguida por uma decisão de banco compartilhado em 27/11/2026, posteriormente
+  substituída pela decisão atual de SQLite local acima.
 
 ## 27/11/2026 — Banco compartilhado no Supabase
 
@@ -45,6 +55,7 @@ Este arquivo registra as decisões refletidas na implementação atual.
   aplicativo distribuído e aplica autenticação e autorização no servidor.
 - **Operação:** Configurar URL JDBC, segredo de sessão e URL pública da API por
   variáveis de ambiente; o deploy público exige HTTPS.
+- **Situação:** Substituída pela decisão de SQLite local no início deste arquivo.
 
 ## 26/11/2026 — Links de fotos e requisito do briefing
 

@@ -4,6 +4,15 @@
 
 This file records the decisions reflected in the current implementation.
 
+## 27/11/2026 — Local SQLite as the only database
+
+- **Decision:** Use one SQLite database file on each computer and connect to it
+  directly from the desktop application. Do not require a Java API, Supabase,
+  or a hosted deployment.
+- **Alternative considered:** A shared remote database accessed through an API.
+- **Rationale:** Keep the application self-contained and avoid external service
+  setup. Data is local to each computer and is not synchronized.
+
 ## 23/11/2026 — Java and desktop stack
 
 - **Decision:** Use Java 21, Swing, and Maven.
@@ -33,7 +42,8 @@ This file records the decisions reflected in the current implementation.
   at runtime.
 - **Alternative considered:** A shared Supabase database.
 - **Rationale and status:** This was the initial implementation; it was
-  superseded on 27/11/2026 by the shared database decision below.
+  followed by a shared-database decision on 27/11/2026, which was later
+  superseded by the current local SQLite decision above.
 
 ## 27/11/2026 — Shared Supabase database
 
@@ -46,6 +56,7 @@ This file records the decisions reflected in the current implementation.
   server.
 - **Operation:** Configure the JDBC URL, session secret, and public API URL using
   environment variables; public deployment requires HTTPS.
+- **Status:** Superseded by the local SQLite decision at the top of this file.
 
 ## 26/11/2026 — Photo links and briefing requirement
 

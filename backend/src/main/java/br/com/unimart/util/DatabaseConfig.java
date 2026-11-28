@@ -3,7 +3,6 @@ package br.com.unimart.util;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -14,10 +13,8 @@ import java.util.logging.Logger;
 
 public final class DatabaseConfig {
 
-    private static final String DB_URL = "jdbc:sqlite:database/feira_trocas.db";
-    private static final String DB_FALLBACK_URL = "jdbc:sqlite:../database/feira_trocas.db";
-    private static final int LATEST_SQLITE_SCHEMA_VERSION = 3;
-    private static final int LATEST_POSTGRES_SCHEMA_VERSION = 4;
+    private static final String DATABASE_URL_PREFIX = "jdbc:sqlite:";
+    private static final int LATEST_SCHEMA_VERSION = 3;
     private static final Logger LOGGER = Logger.getLogger(DatabaseConfig.class.getName());
     private static String activeDbUrl;
 
@@ -26,32 +23,18 @@ public final class DatabaseConfig {
 
     public static synchronized String getActiveDbUrl() {
         if (activeDbUrl == null) {
-            resolveDbPath();
+            Path workingDirectory = Path.of("").toAbsolutePath();
+            Path databaseDirectory = workingDirectory.resolve("database");
+            try {
+                Files.createDirectories(databaseDirectory);
+                activeDbUrl = DATABASE_URL_PREFIX
+                        + databaseDirectory.resolve("feira_trocas.db").toString();
+            } catch (IOException | SecurityException error) {
+                LOGGER.log(Level.SEVERE, "Não foi possível preparar a pasta do banco SQLite.", error);
+                throw new IllegalStateException("Não foi possível preparar o banco de dados local.", error);
+            }
         }
         return activeDbUrl;
-    }
-
-    private static void resolveDbPath() {
-        String configuredUrl = System.getenv("TROCAE_DATABASE_URL");
-        if (configuredUrl != null && !configuredUrl.isBlank()) {
-            activeDbUrl = configuredUrl.trim();
-            return;
-        }
-
-        try {
-            Path cwd = Paths.get("").toAbsolutePath();
-            boolean runningFromBackend = cwd.getFileName() != null
-                    && cwd.getFileName().toString().equals("backend");
-            Path databaseDirectory = runningFromBackend
-                    ? cwd.resolve("..").resolve("database").normalize()
-                    : cwd.resolve("database");
-
-            Files.createDirectories(databaseDirectory);
-            activeDbUrl = runningFromBackend ? DB_FALLBACK_URL : DB_URL;
-        } catch (IOException | SecurityException e) {
-            LOGGER.log(Level.WARNING, "Não foi possível preparar a pasta do banco de dados.", e);
-            activeDbUrl = DB_URL;
-        }
     }
 
     public static Connection getConnection() throws SQLException {
@@ -59,19 +42,21 @@ public final class DatabaseConfig {
     }
 
     public static Connection getConnection(String jdbcUrl) throws SQLException {
+        if (jdbcUrl == null || !jdbcUrl.startsWith(DATABASE_URL_PREFIX)) {
+            throw new IllegalArgumentException("Somente conexões SQLite são suportadas.");
+        }
+
         Connection connection = DriverManager.getConnection(jdbcUrl);
         try (Statement statement = connection.createStatement()) {
-            if (jdbcUrl.startsWith("jdbc:sqlite:")) {
-                statement.execute("PRAGMA foreign_keys = ON");
-            }
+            statement.execute("PRAGMA foreign_keys = ON");
             return connection;
-        } catch (SQLException e) {
+        } catch (SQLException error) {
             try {
                 connection.close();
             } catch (SQLException closeError) {
-                e.addSuppressed(closeError);
+                error.addSuppressed(closeError);
             }
-            throw e;
+            throw error;
         }
     }
 
@@ -80,9 +65,8 @@ public final class DatabaseConfig {
     }
 
     static void initializeDatabase(String jdbcUrl) throws SQLException {
-        if (jdbcUrl.startsWith("jdbc:postgresql:")) {
-            initializePostgresDatabase(jdbcUrl);
-            return;
+        if (jdbcUrl == null || !jdbcUrl.startsWith(DATABASE_URL_PREFIX)) {
+            throw new IllegalArgumentException("Somente conexões SQLite são suportadas.");
         }
 
         try (Connection connection = getConnection(jdbcUrl)) {
@@ -90,163 +74,34 @@ public final class DatabaseConfig {
             try {
                 criarTabelaMigracoes(connection);
                 int currentVersion = buscarVersaoAtual(connection);
-                if (currentVersion > LATEST_SQLITE_SCHEMA_VERSION) {
+                if (currentVersion > LATEST_SCHEMA_VERSION) {
                     throw new SQLException("O banco foi criado por uma versão mais recente do Trocaê.");
                 }
 
-                for (int version = currentVersion + 1; version <= LATEST_SQLITE_SCHEMA_VERSION; version++) {
+                for (int version = currentVersion + 1; version <= LATEST_SCHEMA_VERSION; version++) {
                     aplicarMigracao(connection, version);
                     registrarMigracao(connection, version);
                 }
                 connection.commit();
-            } catch (SQLException | RuntimeException e) {
+            } catch (SQLException | RuntimeException error) {
                 try {
                     connection.rollback();
                 } catch (SQLException rollbackError) {
-                    e.addSuppressed(rollbackError);
+                    error.addSuppressed(rollbackError);
                 }
-                throw e;
+                throw error;
             }
-        }
-    }
-
-    private static void initializePostgresDatabase(String jdbcUrl) throws SQLException {
-        try (Connection connection = getConnection(jdbcUrl)) {
-            connection.setAutoCommit(false);
-            try {
-                criarTabelaMigracoes(connection);
-                int currentVersion = buscarVersaoAtual(connection);
-                if (currentVersion > LATEST_POSTGRES_SCHEMA_VERSION) {
-                    throw new SQLException("O banco foi criado por uma versão mais recente do Trocaê.");
-                }
-
-                for (int version = currentVersion + 1; version <= LATEST_POSTGRES_SCHEMA_VERSION; version++) {
-                    if (version == 1) {
-                        migrarEstruturaPostgres(connection);
-                    } else if (version == 2) {
-                        migrarIndicesPostgres(connection);
-                    } else if (version == 4) {
-                        migrarDenunciasEInteressesPostgres(connection);
-                    }
-                    registrarMigracao(connection, version);
-                }
-                connection.commit();
-            } catch (SQLException | RuntimeException e) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackError) {
-                    e.addSuppressed(rollbackError);
-                }
-                throw e;
-            }
-        }
-    }
-
-    private static void migrarEstruturaPostgres(Connection connection) throws SQLException {
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS usuarios (
-                        id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-                        nome TEXT NOT NULL,
-                        email TEXT NOT NULL,
-                        turma TEXT,
-                        senha_hash TEXT NOT NULL,
-                        salt TEXT NOT NULL,
-                        status TEXT NOT NULL DEFAULT 'ATIVO',
-                        criado_em TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
-                    )
-                    """);
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS anuncios (
-                        id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-                        titulo TEXT NOT NULL,
-                        descricao TEXT NOT NULL,
-                        categoria TEXT NOT NULL,
-                        modalidade TEXT NOT NULL CHECK (modalidade IN ('TROCA', 'DOACAO')),
-                        nome TEXT NOT NULL,
-                        turma TEXT,
-                        foto TEXT,
-                        usuario_id INTEGER REFERENCES usuarios(id),
-                        status TEXT NOT NULL DEFAULT 'DISPONIVEL'
-                            CHECK (status IN ('DISPONIVEL', 'RESERVADO', 'CONCLUIDO')),
-                        criado_em TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
-                    )
-                    """);
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS interesses (
-                        id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-                        anuncio_id INTEGER NOT NULL REFERENCES anuncios(id),
-                        nome TEXT NOT NULL,
-                        mensagem TEXT NOT NULL,
-                        status TEXT NOT NULL DEFAULT 'PENDENTE'
-                            CHECK (status IN ('PENDENTE', 'ACEITO', 'ENCERRADO', 'CANCELADO')),
-                        criado_em TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
-                    )
-                    """);
-        }
-    }
-
-    private static void migrarIndicesPostgres(Connection connection) throws SQLException {
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_email_lower ON usuarios (lower(email))"
-            );
-            statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_usuarios_status ON usuarios(status)");
-            statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_anuncios_usuario_id ON anuncios(usuario_id)");
-            statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_interesses_anuncio_id ON interesses(anuncio_id)");
-            statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_anuncios_status_id ON anuncios(status, id DESC)");
-            statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_anuncios_busca_categoria " +
-                            "ON anuncios(status, categoria, modalidade, id DESC)"
-            );
-            statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_anuncios_status_titulo ON anuncios(status, lower(titulo), id DESC)"
-            );
-            statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_anuncios_busca_modalidade ON anuncios(status, modalidade, id DESC)"
-            );
-        }
-    }
-
-    private static void migrarDenunciasEInteressesPostgres(Connection connection) throws SQLException {
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(
-                    "ALTER TABLE interesses ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES usuarios(id)"
-            );
-            statement.executeUpdate(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_interesses_usuario_anuncio "
-                            + "ON interesses(usuario_id, anuncio_id) WHERE usuario_id IS NOT NULL"
-            );
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS denuncias (
-                        id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-                        anuncio_id INTEGER NOT NULL REFERENCES anuncios(id),
-                        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
-                        motivo TEXT NOT NULL,
-                        detalhes TEXT,
-                        criado_em TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
-                    )
-                    """);
-            statement.executeUpdate(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_denuncias_usuario_anuncio "
-                            + "ON denuncias(usuario_id, anuncio_id)"
-            );
-            statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_denuncias_anuncio ON denuncias(anuncio_id)"
-            );
         }
     }
 
     private static void criarTabelaMigracoes(Connection connection) throws SQLException {
-        String timestampDefault = connection.getMetaData().getDatabaseProductName().equalsIgnoreCase("PostgreSQL")
-                ? "CURRENT_TIMESTAMP::text" : "CURRENT_TIMESTAMP";
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS schema_migrations (
                         version INTEGER PRIMARY KEY,
-                        applied_at TEXT NOT NULL DEFAULT %s
+                        applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                     )
-                    """.formatted(timestampDefault));
+                    """);
         }
     }
 
@@ -296,7 +151,7 @@ public final class DatabaseConfig {
                         FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
                     )
                     """);
-            garantirColunaUsuarioId(connection);
+            garantirColunaUsuarioId(connection, "anuncios");
             statement.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS interesses (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -321,16 +176,16 @@ public final class DatabaseConfig {
                     "CREATE INDEX IF NOT EXISTS idx_anuncios_status_id ON anuncios(status, id DESC)"
             );
             statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_anuncios_busca_categoria " +
-                            "ON anuncios(status, categoria, modalidade, id DESC)"
+                    "CREATE INDEX IF NOT EXISTS idx_anuncios_busca_categoria "
+                            + "ON anuncios(status, categoria, modalidade, id DESC)"
             );
             statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_anuncios_status_titulo " +
-                            "ON anuncios(status, titulo COLLATE NOCASE, id DESC)"
+                    "CREATE INDEX IF NOT EXISTS idx_anuncios_status_titulo "
+                            + "ON anuncios(status, titulo COLLATE NOCASE, id DESC)"
             );
             statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_anuncios_busca_modalidade " +
-                            "ON anuncios(status, modalidade, id DESC)"
+                    "CREATE INDEX IF NOT EXISTS idx_anuncios_busca_modalidade "
+                            + "ON anuncios(status, modalidade, id DESC)"
             );
             statement.executeUpdate("""
                     CREATE TRIGGER IF NOT EXISTS trg_anuncios_validate_insert
@@ -385,39 +240,37 @@ public final class DatabaseConfig {
     }
 
     private static void migrarInteressesEDenuncias(Connection connection) throws SQLException {
-        garantirColunaUsuarioIdInteresse(connection);
+        garantirColunaUsuarioId(connection, "interesses");
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(
                     "CREATE UNIQUE INDEX IF NOT EXISTS idx_interesses_usuario_anuncio "
-                            + "ON interesses(usuario_id, anuncio_id) "
-                            + "WHERE usuario_id IS NOT NULL"
+                            + "ON interesses(usuario_id, anuncio_id) WHERE usuario_id IS NOT NULL"
             );
-            statement.executeUpdate(
-                    "CREATE TABLE IF NOT EXISTS denuncias ("
-                            + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                            + "anuncio_id INTEGER NOT NULL,"
-                            + "usuario_id INTEGER NOT NULL,"
-                            + "motivo TEXT NOT NULL,"
-                            + "detalhes TEXT,"
-                            + "criado_em TEXT DEFAULT CURRENT_TIMESTAMP,"
-                            + "FOREIGN KEY(anuncio_id) REFERENCES anuncios(id),"
-                            + "FOREIGN KEY(usuario_id) REFERENCES usuarios(id)"
-                            + ")"
-            );
+            statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS denuncias (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        anuncio_id INTEGER NOT NULL,
+                        usuario_id INTEGER NOT NULL,
+                        motivo TEXT NOT NULL,
+                        detalhes TEXT,
+                        criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(anuncio_id) REFERENCES anuncios(id),
+                        FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
+                    )
+                    """);
             statement.executeUpdate(
                     "CREATE UNIQUE INDEX IF NOT EXISTS idx_denuncias_usuario_anuncio "
                             + "ON denuncias(usuario_id, anuncio_id)"
             );
             statement.executeUpdate(
-                    "CREATE INDEX IF NOT EXISTS idx_denuncias_anuncio "
-                            + "ON denuncias(anuncio_id)"
+                    "CREATE INDEX IF NOT EXISTS idx_denuncias_anuncio ON denuncias(anuncio_id)"
             );
         }
     }
 
-    private static void garantirColunaUsuarioIdInteresse(Connection connection) throws SQLException {
+    private static void garantirColunaUsuarioId(Connection connection, String table) throws SQLException {
         try (Statement statement = connection.createStatement();
-             ResultSet columns = statement.executeQuery("PRAGMA table_info(interesses)")) {
+             ResultSet columns = statement.executeQuery("PRAGMA table_info(" + table + ")")) {
             while (columns.next()) {
                 if ("usuario_id".equals(columns.getString("name"))) {
                     return;
@@ -426,22 +279,7 @@ public final class DatabaseConfig {
         }
 
         try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate("ALTER TABLE interesses ADD COLUMN usuario_id INTEGER");
-        }
-    }
-
-    private static void garantirColunaUsuarioId(Connection connection) throws SQLException {
-        try (Statement statement = connection.createStatement();
-             ResultSet columns = statement.executeQuery("PRAGMA table_info(anuncios)")) {
-            while (columns.next()) {
-                if ("usuario_id".equals(columns.getString("name"))) {
-                    return;
-                }
-            }
-        }
-
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate("ALTER TABLE anuncios ADD COLUMN usuario_id INTEGER");
+            statement.executeUpdate("ALTER TABLE " + table + " ADD COLUMN usuario_id INTEGER");
         }
     }
 
